@@ -2,20 +2,20 @@ System coldstorageservice
 
 // Messaggi per le interazioni del robot ----------------------------------------
 Request engage        : engage( OWNER, STEPTIME ) // richiesta di ingaggio
-Reply   engagedone    : engagedone( ARG )    // for engage // risposta positiva di conferma
-Reply   engagerefused : engagerefused( ARG ) // for engage // risposta negativa di rifiuto
+Reply   engagedone    : engagedone( ARG )    // for engage // risposta positiva 
+Reply   engagerefused : engagerefused( ARG ) // for engage // risposta negativa 
 
 Dispatch disengage    : disengage(ARG) // messaggio di disingaggio
 // -----------------------------------------
 
 // Messaggi dell'applicazione
 Request storerequest  : storerequest( KG ) // richiesta di depositare KG
-Reply storeaccepted   : storeaccepted( TICKET ) // risposta di accettamento
-Reply storerefused    : storerefused( KG ) // risposta di rifiuto
+Reply storeaccepted   : storeaccepted( TICKET ) // risposta 
+Reply storerefused    : storerefused( KG ) // risposta 
 
 Request ticketrequest : ticketrequest( TICKET ) // richiesta per inviare il ticket
-Reply chargetaken     : chargetaken( TICKET ) // risposta di accettamento carico
-Reply chargerefused   : chargerefused( TICKET ) // mesrispostasaggio di rifiuto carico
+Reply chargetaken     : chargetaken( TICKET ) // accettamento carico
+Reply chargerefused   : chargerefused( TICKET ) // rifiuto carico
 //-----------------------------------------------
 
 Context ctxcoldstorageservice ip [host="localhost" port=8080]
