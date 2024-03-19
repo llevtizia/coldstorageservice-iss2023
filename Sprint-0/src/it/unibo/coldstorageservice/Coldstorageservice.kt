@@ -57,11 +57,11 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								if(  payloadArg(0) < MAXW - Temp_load  
 								 ){CommUtils.outgreen("$name accepting load of ${payloadArg(0) kg")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
-								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)"   )  
+								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)","serviceaccessgui"   )  
 								}
 								else
 								 {CommUtils.outgreen("$name refusing load of ${payloadArg(0) kg")
-								 answer("storerequest", "storerefused", "storerefused(payloadArg(0))"   )  
+								 answer("storerequest", "storerefused", "storerefused(payloadArg(0))","serviceaccessgui"   )  
 								 }
 						}
 						//genTimer( actor, state )
@@ -78,11 +78,11 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								 var Time = 10   
 								if(  Time < TICKETTIME  
 								 ){CommUtils.outgreen("$name accepting ticket n.${payloadArg(0)")
-								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))"   )  
+								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))","serviceaccessgui"   )  
 								}
 								else
 								 {CommUtils.outgreen("$name refusing ticket n.${payloadArg(0)")
-								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))"   )  
+								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))","serviceaccessgui"   )  
 								 }
 						}
 						//genTimer( actor, state )

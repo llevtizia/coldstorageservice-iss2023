@@ -28,7 +28,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						 	   
 						CommUtils.outmagenta("$name START ")
 						CommUtils.outmagenta("$name engage BASIC ROBOT ")
-						request("engage", "engage(trolley,300)" ,"basicrobot" )  
+						request("engage", "engage(trolley,330)" ,"basicrobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

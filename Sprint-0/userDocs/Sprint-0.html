@@ -132,12 +132,12 @@
                 <ul>
                     <li>
                         il <k>metamodello QActor</k> per la modellazione del sistema (si veda 
-                        <a href="./html/QakActors23.html">QakActors23</a> per maggiori informazioni)
+                        <a href="./html/QakActors24.html">QakActors24</a> per maggiori informazioni)
                     </li>
                     <li>
                         il servizio <a href="html/BasicRobot23.html">BasicRobot23</a>: un componente software che esegue comandi di 
-                        spostamento di un DDR-robot in <i>modo indipendente dalla tecnologia</i> con cui è realizzato del robot (virtuale o reale). 
-                        Il servizio è realizzato ad <b>attori</b>:
+                        spostamento di un DDR robot in <i>modo indipendente dalla tecnologia</i> con cui questo è realizzato (virtuale o reale). 
+                        <br>Il servizio è realizzato ad <b>attori</b>:
                         <img src="html/_images/basicrobot23Fnal.PNG" alt="basic robot arch" class="small_image">
                     </li>
                 </ul>
@@ -164,7 +164,7 @@
                 Entrambe le interfacce possono essere inizialmente modellate anch'esse come attori.
             </p>
 
-            <br><br>
+            <br>
             <h2>Alarm requirements</h2>
             <p>
                 Il committente fornisce il <a href="./html/RaspApplCode.html">software di supporto</a> per l'uso di <k>Sonar</k> e <k>Led</k>.
@@ -219,7 +219,7 @@
             <p>
             
                 Per realizzare un primo modello del sistema sulla base delle analisi, si sceglie di utilizzare il linguaggio di modellazione 
-                <a href="html/QakActors23.html">Qak</a> fornito dal committente. Il metamodello 
+                <a href="./html/QakActors24.html">Qak</a> fornito dal committente. Il metamodello 
                 <ul>
                     <li>consente di catturare gli aspetti essenziali del sistema</li>
                     <li>offre l'astrazione <ks>QActor</ks> per rappresentare le entità come componenti autonomi 
@@ -228,6 +228,12 @@
                 La <i>Software Factory</i> definita per il linguaggio crea automaticamente un modello 
                 eseguibile in <b>Kotlin</b>.
 
+                <p>
+                    L'architettura del sistema è la seguente:
+                    <br><br>
+                    <img src="html/_images/tf23/coldstorageservicearch.png" alt="basic robot arch" class="small_image">
+                </p>
+                
                 <p>
                     Il sistema è costituito da due <b>contesti</b>:
                     <ul>
