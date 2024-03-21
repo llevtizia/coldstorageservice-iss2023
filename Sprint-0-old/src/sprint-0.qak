@@ -1,0 +1,209 @@
+System coldstorageservice
+
+// Messaggi per le interazioni del robot ----------------------------------------
+Request engage        : engage( OWNER, STEPTIME ) "richiesta ingaggio"
+Reply   engagedone    : engagedone( ARG )    // for engage  
+Reply   engagerefused : engagerefused( ARG ) // for engage 
+
+Dispatch disengage    : disengage(ARG) 
+// ------------------------------------------------------------------------------
+
+// Messaggi dell'applicazione ---------------------------------------------------
+Request storerequest  : storerequest( KG ) 			"richiesta deposito KG"
+Reply storeaccepted   : storeaccepted( TICKET )  	"ok c'è spazio"
+Reply storerefused    : storerefused( KG )  		"non c'è spazio"
+
+Request ticketrequest : ticketrequest( TICKET ) 	"richiesta invio ticket"
+Reply chargetaken     : chargetaken( TICKET ) 		"charge taken"
+Reply chargerefused   : chargerefused( TICKET ) 	"charge refused"
+//-------------------------------------------------------------------------------
+
+Context ctxcoldstorageservice ip [host="localhost" port=8080]
+Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
+
+ExternalQActor basicrobot context ctxbasicrobot
+  
+  
+// 1 - service access gui
+QActor serviceaccessgui context ctxcoldstorageservice {
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color blue
+	}
+	Goto sendrequest
+	
+	// send the first request to the service
+	State sendrequest {
+		[# var Load = 50  #]
+		println("$name SEND REQUEST: $Load kg") color blue
+		request coldstorageservice -m storerequest : storerequest($Load)
+	}
+	Transition t0 whenReply storeaccepted -> sendticket
+				whenReply storerefused -> endwork
+				
+	// send the second request to the service	
+	State sendticket {
+		onMsg( storeaccepted : storeaccepted( TICKET ) ) {
+			[# var Ticket = "${payloadArg(0)}" #]
+			println("$name MOVING TO INDOOR --> ticket: $Ticket") color blue
+			delay 3000 // time for the user to move to the indoor port
+			
+			println("$name SENDING TICKET: $Ticket") color blue
+			request coldstorageservice -m ticketrequest : ticketrequest($Ticket)
+		}
+	}
+	Transition t0 whenReply chargetaken -> endwork
+				whenReply chargerefused -> endwork
+				
+	// end work
+	State endwork {
+		onMsg( storerefused : storerefused( KG ) ) {
+			println("$name store refused. END WORK") color blue
+		}
+		onMsg( chargetaken : chargetaken( KG ) ) {
+			println("$name charge taken. END WORK") color blue
+		}
+		onMsg( chargerefused : chargerefused( TIME ) ) {
+			println("$name charge refused. END WORK") color blue
+		}
+	}
+}
+
+
+
+// 2 - coldstorageservice
+QActor coldstorageservice context ctxcoldstorageservice {
+	
+	// global variables
+	[#
+		var MAXW = 1000			
+		var TICKETTIME = 15
+		var Temp_load = 0
+		var TicketNumber = 1	
+	#]
+	
+	// aggiungere una lista per memorizzare il tempo del ticket e il carico
+	
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color green
+	}
+	Goto waitrequest
+	
+	// wait request
+	State waitrequest {
+		println("$name waiting for requests... ") color green
+	}
+	Transition t0 whenRequest storerequest -> handlestore
+				whenRequest ticketrequest -> handleticket
+				
+	// handle the first request			
+	State handlestore {
+		onMsg( storerequest : storerequest( KG ) ) {
+			if [# payloadArg(0) < MAXW - Temp_load #] {
+				println("$name accepting load of ${payloadArg(0) kg") color green
+				println("$name generating ticket n. $TicketNumber") color green
+				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber ) caller==serviceaccessgui
+				// add the ticket to the list
+			}
+			
+			else {
+				println("$name refusing load of ${payloadArg(0) kg") color green
+				replyTo storerequest with storerefused : storerefused( payloadArg(0) ) caller==serviceaccessgui
+			}
+		}
+	}
+	Goto waitrequest
+	
+	// handle the second request
+	State handleticket {
+		onMsg( ticketrequest : ticketrequest( TICKET ) ) {
+			// need to check the time
+			[# var Time = 10  #] // System.currentTimeMillis() - time of the ticket
+			if [# Time < TICKETTIME #] {
+				println("$name accepting ticket n.${payloadArg(0)") color green
+				replyTo ticketrequest with chargetaken : chargetaken( payloadArg(0) ) caller==serviceaccessgui
+				
+				// update load
+			}
+			
+			else {
+				println("$name refusing ticket n.${payloadArg(0)") color green
+				replyTo ticketrequest with chargerefused : chargerefused( payloadArg(0) ) caller==serviceaccessgui
+			}
+		}
+		// remove the request from the list
+	}
+	Goto waitrequest
+}
+
+
+
+// 3 - trolley
+QActor trolley context ctxcoldstorageservice {
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color magenta
+		println("$name engage BASIC ROBOT ") color magenta
+		request basicrobot -m engage: engage(trolley,330)
+	}
+	Transition t0 whenReply engagedone -> waitrequest
+	
+	// wait for a request
+	State waitrequest {
+		println("$name waiting for requests...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to send takeCharge command to the trolley ") #] //simulate the command 
+	}
+	Goto gotoindoor
+	
+	// go to indoot
+	State gotoindoor {
+		println("$name moving to INDOOR") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto takeload
+	
+	// take the load
+	State takeload {
+		println("$name taking the load...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+	
+		// replyTo ticketrequest with chargetaken
+	}
+	Goto gotocoldroom
+	
+	// go to cold room
+	State gotocoldroom {
+		println("$name moving to COLDROOM") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto storeload
+	
+	// store the load
+	State storeload {
+		println("$name storing the load...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to terminate.") #] //simulate the command 
+		// waits for requests
+	} 
+	Transition t0 whenTime 2000 -> gohome
+	 
+	// go home
+	State gohome{
+		println("$name going HOME...") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto trolleyathome
+	
+	// at home
+	State trolleyathome {
+		println("$name trolley at home") color magenta
+		forward basicrobot -m disengage : disengage(trolley)
+		
+		println("$name  disengaged") color magenta
+		delay 1000 //avoid to premature abort of connection
+		[# System.exit(0) #]
+	}
+}

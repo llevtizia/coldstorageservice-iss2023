@@ -1,0 +1,410 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" type="text/css" href="html/_static/pygments.css" />
+    
+    <head>
+        <title>Sprint 0 - Letizia Mancini</title>
+    </head>
+    
+    <body>
+        <div id="top">
+            <h1>LABORATORIO DI INGEGNERIA DEI SISTEMI SOFTWARE <font size="5"></font> </h1>
+        </div>  
+
+        <!-- INTRODUCTION -->
+        <div class="body"> 
+        <h2>Introduction</h2>
+        <div class="slide1">
+            <b>Goal Sprint 0</b>: analizzare e formalizzare i requisiti
+        </div>
+
+        
+        
+        <!-- REQUIREMENTS -->
+        <h2>Requirements</h2>
+        <div class="remark">
+        <a href="html/TemaFinale23.html#temafinale23">Requisiti dati dal committente</a>
+        </div>
+
+
+        <!-- REQUIREMENTS ANALYSIS -->
+        <h2>Requirement analysis</h2>
+        <div class="remark">
+        <table>
+            <tr>
+                <td class="key">ColdStorageService</td>
+                <td>il servizio che si richiede di progettare</td>
+            </tr>
+            <tr>
+                <td class="key">Service area</td>
+                <td>stanza piana e rettangolare che comprende INDOOR port e Cold Room</td>
+            </tr>
+            <tr>
+                <td class="key">INDOOR port</td>
+                <td>area di servizio dove viene scaricato il carico</td>
+            </tr>
+            <tr>
+                <td class="key">Cold Room</td>
+                <td>container di deposito del carico, con capacità massima di <b>MAXW</b> kg</td>
+            </tr>
+            <tr>
+                <td class="key">Transport trolley</td>
+                <td>interfaccia per l'utilizzo di un <a href="html/VirtualRobot23.html">DDR robot</a>, modellato come un quadrato con lato <b>RD</b>. 
+                    Posizionato inizialmente in <ks>HOME</ks></td>.
+            </tr>
+            <tr>
+                <td class="key">Service Access GUI</td>
+                <td>interfaccia utente che consente di visualizzare il peso dei materiali attualmente nella Cold Room e mandare la richiesta di 
+                    depositare ulteriori <b>FW</b> kg. Se la richiesta viene accettata, l'utente ottiene un ticket valido per un tempo <b>TICKETTIME</b>
+                </td>
+            </tr>
+            <tr>
+                <td class="key">Service Status GUI</td>
+                <td>interfaccia utente che consente ad un <i>service manager</i> di visualizzare lo stato del servizio</td>
+            </tr>
+            <tr>
+                <td class="key">Sonar</td>
+                <td>dispositivo connesso ad un Raspberry Pi. Misura la distanza:
+                    <li>quando è <i>minore</i> del limite dato <b>DLIMIT</b>, il <km>transport
+                        trolley</km> si ferma</li>
+                    <li>riparte quando la distanza è maggiore di <b>DLIMIT</b> </li>                   
+                </td>
+            </tr>
+            <tr>
+                <td class="key">Led</td>
+                <td>dispositivo connesso ad un Raspberry Pi. Il Led è:
+                    <li><b>spento</b> quando il trolley è in <ks>HOME</ks></li>
+                    <li><b>lampeggia</b> quando il trolley si sta muovendo</li>
+                    <li>è <b>acceso</b> quando il trolley è fermo</li>                  
+                </td>
+            </tr>
+            <tr>
+                <td class="key">Truck driver</td>
+                <td>
+                    l'utente che usa il servizio
+                </td>
+            </tr>
+        </table>
+        </br>
+        </div>
+
+
+        <br>
+        <div class="remark">  
+            <p>
+                La <ks>SERVICE AREA</ks> è rappresentabile come un rettangolo di lati <k>L1</k>, <k>L2</k>. In riferimento alla 
+                modellazione del <b>DDR Robot</b> come quadrato di lato RD, possiamo:
+                <ul>
+                    <li>
+                        dividere l'area in <b>celle</b> di dimensioni <b>RD</b>
+                    </li>
+                    <li>
+                        modellare INDOOR port e Cold Room come posizioni sulla mappa
+                    </li>
+                </ul>
+                <br><img src="html/_images/tf23/room_map.png" alt="service area map" class="center"><br>
+                
+            
+                Il robot si muove con uno <b>step</b> da una cella all'altra. Possiamo quindi formalizzare il concetto di <b>posizione</b>
+                introducendo una coppia di coordinate cartesiane che identifica una cella della mappa:
+                        <pre class="column">
+                            0  1  2  3  4  5  6  7  x
+                            0 |r, 1, 1, 1, 1, 1, 1,
+                            1 |1, 1, 1, 1, X, X, 1,
+                            2 |1, 1, 1, 1, X, X, 1,
+                            3 |1, 1, X, 1, 1, 1, 1,
+                            4 |1, 1, 1, 1, 1, 1, 1,
+                            5 |X, X, X, X, X, X, X,
+                            y
+                        </pre>
+                        <br>
+                        <ul>
+                            <li><b>r</b>: posizione corrente del robot</li>
+                            <li><b>X</b>: cella occupata da un ostacolo</li>
+                            <li><b>1</b>: cella libera</li>
+                        </ul>
+                
+            </p>
+
+            <p>
+                Il committente fornisce 
+                <ul>
+                    <li>
+                        il <k>metamodello QActor</k> per la modellazione del sistema (si veda 
+                        <a href="./html/QakActors24.html">QakActors24</a> per maggiori informazioni)
+                    </li>
+                    <li>
+                        il servizio <a href="html/BasicRobot23.html">BasicRobot23</a>: un componente software che esegue comandi di 
+                        spostamento di un DDR robot in <i>modo indipendente dalla tecnologia</i> con cui questo è realizzato (virtuale o reale). 
+                        <br>Il servizio è realizzato ad <b>attori</b>:
+                        <img src="html/_images/basicrobot23Fnal.PNG" alt="basic robot arch" class="small_image">
+                    </li>
+                </ul>
+            </p>
+
+            <p>
+                La <ks>Service Access GUI</ks> è l'interfaccia che consente l'interazione dell'utente con il sistema per:
+                <ul>
+                    <li>
+                        vedere il peso del carico attualmente nella <b>ColdRoom</b>
+                    </li>
+                    <li>
+                        inviare la richiesta di deposito di <b>FW</b> kg di cibo al <i>ColdStorageService</i>
+                    </li>
+                    <li>
+                        inserire il numero del ticket quando il <i>Fridge truck</i> raggiunge l'<b>INDOOR port</b>
+                    </li>
+                </ul>
+                
+                La <ks>Service Status GUI</ks> è l'interfaccia che consente al <i>Service-manager</i> (un utente esterno) 
+                la visualizzazione di informazioni sul sistema.
+
+                <br><br>
+                Entrambe le interfacce possono essere inizialmente modellate anch'esse come attori.
+            </p>
+
+            <br>
+            <h2>Alarm requirements</h2>
+            <p>
+                Il committente fornisce il <a href="./html/RaspApplCode.html">software di supporto</a> per l'uso di <k>Sonar</k> e <k>Led</k>.
+                I due dispositivi fisici possono essere inizialmente modellati come attori esterni al sistema.
+            </p>
+
+        </div>
+
+        <br>
+        <div class="remark">
+            <p><div class="slide1">Use cases and scenarios</div></p>
+            <a href="html/TemaFinale23.html#service-users-story">User story data dal committente</a>
+            <br>
+
+            <p>
+                <ol>
+                    <li>
+                        L'utente invia una richiesta tramite la <i>Service Access GUI</i> per depositare <b>FW</b> kg di carico. 
+                        Se la richiesta è accettata, deve arrivare alla <k>INDOOR port</k> nel tempo <b>TICKETIME</b>, altrimenti 
+                        la richiesta sarà rifiutata.
+                    </li>
+                    <li>
+                        Una volta accettata la richiesta, il <i>ColdStorageService</i> risponde con un messaggio <b>charge taken</b> e l'utente
+                        lascia la <k>INDOOR port</k>.
+                    </li>                    
+                    <li>
+                        Quando il <i>ColdStorageService</i> accetta una richiesta, viene inviato un messaggio al <i>trolley</i>, che deve raggiungere
+                        la <k>INDOOR port</k> e prendere il carico. In seguito, il <i>trolley</i> risponde con il messaggio <b>charge taken</b>
+                        e va alla <i>ColdRoom</i>.
+                    </li>
+                    <li>
+                        Quando finisce un'azione di deposito, il trolley può accettare un'altra richiesta - se presente - o tornare in <k>HOME</k>.
+                    </li>
+                    <li>
+                        Mentre il <i>trolley</i> è in movimento, i requisiti di allarme devono essere rispettati. 
+                    </li>
+                    <li>
+                        La <i>Service Status GUI</i> può consentire di monitorare lo <b>stato corrente</b> del trolley, il <b>peso</b> del carico
+                        nella <i>ColdRoom</i>, il numero di <b>richieste rifutate</b> dall'inizio del servizio. 
+                    </li>
+                </ol>
+
+                <br>I key points <em>5</em>, <em>6</em> saranno trattati in seguito, in quanto non parte significativa
+                del core del servizio.
+            </p>
+        </div>
+
+
+
+        <h2>Problem analysis</h2>
+        <div class="remark">
+            <p>
+            
+                Per realizzare un primo modello del sistema sulla base delle analisi, si sceglie di utilizzare il linguaggio di modellazione 
+                <a href="./html/QakActors24.html">Qak</a> fornito dal committente. Il metamodello 
+                <ul>
+                    <li>consente di catturare gli aspetti essenziali del sistema</li>
+                    <li>offre l'astrazione <ks>QActor</ks> per rappresentare le entità come componenti autonomi 
+                        ed indipendenti. </li>
+                </ul>
+                La <i>Software Factory</i> definita per il linguaggio crea automaticamente un modello 
+                eseguibile in <b>Kotlin</b>.
+
+                <p>
+                    L'architettura del sistema è la seguente:
+                    <br><br>
+                    <img src="html/_images/tf23/coldstorageservicearch.png" alt="basic robot arch" class="small_image">
+                </p>
+                
+                <p>
+                    Il sistema è costituito da due <b>contesti</b>:
+                    <ul>
+                        <li>
+                            <b>ctxbasicrobot</b> per il <ks>basicrobot</ks> fornito dal committente
+                        </li>
+                        <li>
+                            <b>ctxcoldstorageservice</b> per <ks>serviceaccessgui</ks>, <ks>coldstorageservice</ks> e <ks>trolley</ks>
+                        </li>
+                    </ul>
+
+                    <br>
+                    <h4><ks><a href="./sprint-0/serviceaccessgui.qak">SERVICE ACCESS GUI</a></ks></h4>
+                    <ul>
+                        <li>
+                            La <ks>serviceaccessgui</ks> è modellata come un QActor che simula le interazioni dell'utente con il sistema
+                        </li>
+                        <li>
+                            <em>sendrequest</em>: invia la richiesta di <i>storerequest</i> al <ks>coldstorageservice</ks> e attende una
+                            risposta che può essere 
+                            <ul>
+                                <li>negativa: <i>storerefused</i> che porta allo stato <em>endwork</em></li>
+                                <li>positiva: <i>storeaccepted</i> che porta allo stato <em>sendticket</em></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <em>sendticket</em>: si simula lo spostamento dell'utente all'<k>INDOOR</k> e l'invio del numero del ticket al
+                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>chargetaken</i>, <i>chargerefused</i>
+
+                        </li>
+                    </ul>
+
+                    <h4><ks><a href="./sprint-0/coldstorageservice.qak">COLD STORAGE SERVICE</a></ks></h4>
+                    <ul>
+                        <li>
+                            Il <ks>coldstorageservice</ks> definisce le variabili di sistema:
+                            <ul>
+                                <li><b>MAXW</b>: carico massimo della <k>coldroom</k></li>
+                                <li><b>TICKETTIME</b>: tempo di validità del ticket</li>
+                                <li><b>Temp_load</b>: lo stato del carico</li>
+                                <li><b>TicketNumber</b>: per ottenere i numeri incrementali dei ticket</li>
+                            </ul>
+                        </li>
+                        <li>
+                            L'attore gestisce due possibili richieste: <i>storerequest</i> e <i>ticketrequest</i>
+                        </li>
+                        <li>
+                            <em>handlestore</em>: si verifica che nella <k>coldroom</k> ci sia abbastanza spazio per il carico:
+                            <ul>
+                                <li><i>storeaccepted</i>: la richiesta viene accettata e viene generato il ticket</li>
+                                <li><i>storerefused</i>: la richiesta viene rifiutata</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <em>handleticket</em>: si calcola il tempo trascorso dall'emissione del ticket:
+                            <ul>
+                                <li>
+                                    <i>chargetaken</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
+                                    è accettata
+                                </li>
+                                <li><i>chargerefused</i>: il tempo trascorso è maggiore e la richiesta non è più valida</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4><ks><a href="./sprint-0/trolley.qak">TROLLEY</a></ks></h4>
+                    <ul>
+                        <li>
+                            <em>s0</em>: il <ks>trolley</ks> invia la richiesta di <i>engage</i> al <ks>basicrobot</ks> e attende l'esito
+                            positivo dell'operazione per passare allo stato <em>waitrequest</em>
+                        </li>
+                        <li><em>waitrequest</em>: attende la ricezione di una richiesta per andare in <em>gotoindoor</em></li>
+                        <li>
+                            <em>takeload</em>: simula il caricamento del robot. Al termine, il robot dovrà inviare il messaggio di 
+                            <i>chargetaken</i> 
+                        </li>
+                        <li><em>gotocoldroom</em>: simula lo spostamento del robot dalla <k>INDOOR</k> alla <k>coldroom</k></li>
+                        <li><em>storeload</em>: il robot scarica il carico nella <k>coldroom</k>. Se non arrivano altre richieste torna in <k>HOME</k></li>
+                        <li><em>gohome</em>: simula lo spostamento del robot in <k>HOME</k></li>
+                        <li>
+                            <em>trolleyathome</em>: stato finale in cui viene inviata la richiesta di <i>disengage</i> al <ks>basicrobot</ks>
+                        </li>
+                    </ul>
+
+                </p>
+
+
+
+
+              
+            </p>
+
+            
+            
+            
+        </div>
+
+        <h2>Test plans</h2> 
+
+
+        <h2>Project</h2>
+        <div class="remark">
+            <h4>Piano di lavoro</h4>
+            <br>
+            <table>
+                <tr>
+                    <td><b>SPRINT1</b></td>
+                    <td>
+                        <ul>
+                            <li>
+                                prototipo <i>coldstorageservice</i>: keypoints <em>1</em>, <em>2</em>, <em>3</em>, <em>4</em> della <ks>user story</ks>
+                            </li>
+                            <li>testing</li>
+                        </ul>  
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>SPRINT2</b></td>
+                    <td>
+                        <ul>
+                            <li>estensione del sistema con introduzione degli alarm requirements</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>SPRINT3</b></td>
+                    <td>
+                        <ul>
+                            <li>realizzazione GUI di sistema</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </div> 
+
+        <h2>Testing</h2> 
+        
+
+        <h2>Deployment</h2> 
+
+        
+        <h2>Maintenance</h2> 
+        
+        <!-- USEFUL
+        <table style="width:100%" border="1">
+        <tr>
+        <td style="width:50%">
+        </td>
+        <td></td>
+        </tr>
+        </table>
+        -->
+                    
+        <br/><br/> 	
+        </div>  
+
+        <div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+        <ul>
+            <li>By Letizia Mancini</li>
+            <li>email: letizia.mancini3@studio.unibo.it </li>
+            <li>
+                GIT repo: <a href="https://github.com/llevtizia/coldstorageservice-iss2023">https://github.com/llevtizia/coldstorageservice-iss2023</a> 
+            </li>
+            <li>matricola: 0000926656</li>
+        </ul>
+
+
+        <img src="html/_images/picture.jpg" alt="picture" width="15%" height="15%" margin-left="2%">
+
+        </div> 
+    </body>
+</html>
