@@ -2,8 +2,8 @@ System coldstorageservice
 
 // Messaggi per le interazioni del robot ----------------------------------------
 Request engage        : engage( OWNER, STEPTIME ) "richiesta ingaggio"
-Reply   engagedone    : engagedone( ARG )    // for engage  
-Reply   engagerefused : engagerefused( ARG ) // for engage 
+Reply   engagedone    : engagedone( ARG )    for engage  
+Reply   engagerefused : engagerefused( ARG ) for engage 
 
 Dispatch disengage    : disengage(ARG) 
 // ------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ Reply chargetaken     : chargetaken( TICKET ) 		"charge taken"
 Reply chargerefused   : chargerefused( TICKET ) 	"charge refused"
 //-------------------------------------------------------------------------------
 
-Context ctxcoldstorageservice ip [host="localhost" port=8080]
+Context ctxcoldstorageservice ip [host="localhost" port=8015]
 Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
 
 ExternalQActor basicrobot context ctxbasicrobot
@@ -102,15 +102,23 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	// handle the first request			
 	State handlestore {
 		onMsg( storerequest : storerequest( KG ) ) {
-			if [# payloadArg(0) < MAXW - Temp_load #] {
-				println("$name accepting load of ${payloadArg(0) kg") color green
+			[# 
+				var Load = payloadArg(0).toInt() 
+				var FreeSpace = MAXW - Temp_load 
+			#] 
+			if [# Load <= FreeSpace #] {
+				[# 
+					val Ticket = TicketNumber
+					TicketNumber = TicketNumber + 1
+				#]
+				println("$name accepting load of ${payloadArg(0)} kg ") color green
 				println("$name generating ticket n. $TicketNumber") color green
 				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber ) caller==serviceaccessgui
 				// add the ticket to the list
 			}
 			
 			else {
-				println("$name refusing load of ${payloadArg(0) kg") color green
+				println("$name refusing load of ${payloadArg(0)} kg") color green
 				replyTo storerequest with storerefused : storerefused( payloadArg(0) ) caller==serviceaccessgui
 			}
 		}
@@ -123,14 +131,14 @@ QActor coldstorageservice context ctxcoldstorageservice {
 			// need to check the time
 			[# var Time = 10  #] // System.currentTimeMillis() - time of the ticket
 			if [# Time < TICKETTIME #] {
-				println("$name accepting ticket n.${payloadArg(0)") color green
+				println("$name accepting ticket n.${payloadArg(0)}") color green
 				replyTo ticketrequest with chargetaken : chargetaken( payloadArg(0) ) caller==serviceaccessgui
 				
 				// update load
 			}
 			
 			else {
-				println("$name refusing ticket n.${payloadArg(0)") color green
+				println("$name refusing ticket n.${payloadArg(0)}") color green
 				replyTo ticketrequest with chargerefused : chargerefused( payloadArg(0) ) caller==serviceaccessgui
 			}
 		}
@@ -148,29 +156,31 @@ QActor trolley context ctxcoldstorageservice {
 		printCurrentMessage
 		println("$name START ") color magenta
 		println("$name engage BASIC ROBOT ") color magenta
-		request basicrobot -m engage: engage(trolley,330)
+		//request basicrobot -m engage: engage(trolley,330)
 	}
-	Transition t0 whenReply engagedone -> waitrequest
+	//Transition t0 whenReply engagedone -> waitrequest
+	Goto waitrequest
 	
 	// wait for a request
 	State waitrequest {
 		println("$name waiting for requests...") color magenta
 		[# CommUtils.waitTheUser("$name HIT to send takeCharge command to the trolley ") #] //simulate the command 
-	}
+		delay 500
+	}  
 	Goto gotoindoor
 	
 	// go to indoot
 	State gotoindoor {
 		println("$name moving to INDOOR") color magenta
-		delay 2000 // simulate the movement
+		delay 500 // simulate the movement
 	}
 	Goto takeload
 	
 	// take the load
 	State takeload {
 		println("$name taking the load...") color magenta
-		[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
-	
+		//[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+		delay 500
 		// replyTo ticketrequest with chargetaken
 	}
 	Goto gotocoldroom
@@ -178,14 +188,15 @@ QActor trolley context ctxcoldstorageservice {
 	// go to cold room
 	State gotocoldroom {
 		println("$name moving to COLDROOM") color magenta
-		delay 2000 // simulate the movement
+		delay 5000 // simulate the movement
 	}
 	Goto storeload
 	
 	// store the load
 	State storeload {
 		println("$name storing the load...") color magenta
-		[# CommUtils.waitTheUser("$name HIT to terminate.") #] //simulate the command 
+		//[# CommUtils.waitTheUser("$name HIT to terminate.") #] //simulate the command 
+		delay 500
 		// waits for requests
 	} 
 	Transition t0 whenTime 2000 -> gohome

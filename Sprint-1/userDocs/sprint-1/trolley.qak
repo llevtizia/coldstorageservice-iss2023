@@ -1,0 +1,65 @@
+QActor trolley context ctxcoldstorageservice {
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color magenta
+		println("$name engage BASIC ROBOT ") color magenta
+		request basicrobot -m engage: engage(trolley,300)
+	}
+	Transition t0 whenReply engagedone -> waitrequest
+	
+	// wait for a request
+	State waitrequest {
+		println("$name waiting for requests...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to send takeCharge command to the trolley ") #] //simulate the command 
+	}
+	Goto gotoindoor
+	
+	// go to indoot
+	State gotoindoor {
+		println("$name moving to INDOOR") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto takeload
+	
+	// take the load
+	State takeload {
+		println("$name taking the load...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+	
+		// replyTo ticketrequest with chargetaken
+	}
+	Goto gotocoldroom
+	
+	// go to cold room
+	State gotocoldroom {
+		println("$name moving to COLDROOM") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto storeload
+	
+	// store the load
+	State storeload {
+		println("$name storing the load...") color magenta
+		[# CommUtils.waitTheUser("$name HIT to terminate.") #] //simulate the command 
+		// waits for requests
+	} 
+	Transition t0 whenTime 2000 -> gohome
+	 
+	// go home
+	State gohome{
+		println("$name going HOME...") color magenta
+		delay 2000 // simulate the movement
+	}
+	Goto trolleyathome
+	
+	// at home
+	State trolleyathome {
+		println("$name trolley at home") color magenta
+		forward basicrobot -m disengage : disengage(trolley)
+		
+		println("$name  disengaged") color magenta
+		delay 1000 //avoid to premature abort of connection
+		[# System.exit(0) #]
+	}
+}
