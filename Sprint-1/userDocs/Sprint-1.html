@@ -20,11 +20,11 @@
         </div>
         <div class="remark">
             <p>
-                <a href="./../../Sprint-0/userDocs/Sprint-0.html">Sprint 0</a>: lo Sprint 0 si occupa dell'<b>analisi dei
+                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 0</a>: lo Sprint 0 si occupa dell'<b>analisi dei
                     requisiti</b> del sistema. Si è concluso con la definizione di una prima <b>architettura logica</b>:
             </p>
             <p>
-                <img src="html/_images/tf23/coldstorageservicearch.png" alt="basic robot arch" class="small_image">
+                <img src="./../../Sprint-0/coldstorageservicearch.png" alt="basic robot arch" class="small_image">
             </p>
         </div>
        
@@ -36,7 +36,7 @@
                 keypoints <em>1</em>, <em>2</em>, <em>3</em>, <em>4</em>
             <br><br>
             <p>
-                Dal modello definito nello Sprint 0, lo <b>Sprint 1</b> aggiunge:
+                Al modello definito nello Sprint 0, lo <b>Sprint 1</b> aggiunge:
                 <ul>
                     <li>il movimento del trolley</li>
                     <li>le interazioni tra i componenti</li>
@@ -56,7 +56,41 @@
                 </ul>
             </p>
             <p>
-                Come già indicato, il committente offre il servizio <a href="./html/BasicRobot23.html">BasicRobot23</a>
+                Come già indicato, il committente offre il servizio <a href="./html/BasicRobot23.html">BasicRobot23</a>.
+                Tra i componenti:
+                <ul>
+                    <li>
+                        <a href="html/RobotPos.html#planexec">planexec</a>: gestisce richieste <b><highlight>doplan</highlight></b> 
+                        di esecuzione di sequenza di mosse, inviando comandi al basicrobot e invia la risposta 
+                        <ul>
+                            <br>
+                            <li><highlight>doplandone</highlight> in caso di successo</li> 
+                            <li><highlight>doplanfailed</highlight> se interrompe l'esecuzione della sequenza in 
+                                caso di ostacolo o di evento alarm</li> 
+                        </ul>
+                        Non usa (e quindi non aggiorna) alcuna mappa della stanza.
+                    </li>
+                    <li>
+                        <a href="html/RobotPos.html">robotpos</a>: gestisce richieste di posizionamento 
+                        <highlight>moverobot</highlight>. Usando un <a href="html/LabPlanner.html">planner</a>, determina
+                        un piano di movimento per raggiungere la destinazione, che esegue usando <b>planexec</b>
+                        <ul>
+                            <br>
+                            <li><highlight>moverobotdone</highlight> in caso di successo</li>
+                            <li><highlight>moverobotfailed</highlight> se l'esecuzione del piano fallisce o viene interrotta</li>
+                        </ul> 
+                        Gestisce anche il comando di utilità <code>Dispatch setrobotstate:setpos(X,Y,D)</code> per 
+                                allineare la rappresentazione del planner sulla posizione corrente reale del robot 
+                                fissata manualmente.
+
+                    </li>
+                </ul>
+            </p>
+            <p>
+                Per costruire dinamicamente una sequenza di mosse con cui il robot può muoversi dalla posizione corrente
+                <b>r</b> a un’altra posizione (libera) sulla 
+                <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#map">mappa</a> 
+                consiste nell’utilizzo di un pianificatore come quello fornito dal committente in <k>unibo.planner23-1.0.jar</k>.
             </p>
         </div>
 
@@ -64,118 +98,6 @@
         <!-- PROBLEM ANALYSIS -->  
         <h2>Problem analysis</h2>
         <div class="remark">
-            <p>
-            
-                Per realizzare un primo modello del sistema sulla base delle analisi, si sceglie di utilizzare il linguaggio di modellazione 
-                <a href="./html/QakActors24.html">Qak</a> fornito dal committente. Il metamodello 
-                <ul>
-                    <li>consente di catturare gli aspetti essenziali del sistema</li>
-                    <li>offre l'astrazione <ks>QActor</ks> per rappresentare le entità come componenti autonomi 
-                        ed indipendenti. </li>
-                </ul>
-                La <i>Software Factory</i> definita per il linguaggio crea automaticamente un modello 
-                eseguibile in <b>Kotlin</b>.
-
-                <p>
-                    L'architettura del sistema è la seguente:
-                    <br><br>
-                    <img src="html/_images/tf23/coldstorageservicearch.png" alt="basic robot arch" class="small_image">
-                </p>
-                
-                <p>
-                    Il sistema è costituito da due <b>contesti</b>:
-                    <ul>
-                        <li>
-                            <b>ctxbasicrobot</b> per il <ks>basicrobot</ks> fornito dal committente
-                        </li>
-                        <li>
-                            <b>ctxcoldstorageservice</b> per <ks>serviceaccessgui</ks>, <ks>coldstorageservice</ks> e <ks>trolley</ks>
-                        </li>
-                    </ul>
-
-                    <br>
-                    <h4><ks><a href="./sprint-0/serviceaccessgui.qak">SERVICE ACCESS GUI</a></ks></h4>
-                    <ul>
-                        <li>
-                            La <ks>serviceaccessgui</ks> è modellata come un QActor che simula le interazioni dell'utente con il sistema
-                        </li>
-                        <li>
-                            <em>sendrequest</em>: invia la richiesta di <i>storerequest</i> al <ks>coldstorageservice</ks> e attende una
-                            risposta che può essere 
-                            <ul>
-                                <li>negativa: <i>storerefused</i> che porta allo stato <em>endwork</em></li>
-                                <li>positiva: <i>storeaccepted</i> che porta allo stato <em>sendticket</em></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <em>sendticket</em>: si simula lo spostamento dell'utente all'<k>INDOOR</k> e l'invio del numero del ticket al
-                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>chargetaken</i>, <i>chargerefused</i>
-
-                        </li>
-                    </ul>
-
-                    <h4><ks><a href="./sprint-0/coldstorageservice.qak">COLD STORAGE SERVICE</a></ks></h4>
-                    <ul>
-                        <li>
-                            Il <ks>coldstorageservice</ks> definisce le variabili di sistema:
-                            <ul>
-                                <li><b>MAXW</b>: carico massimo della <k>coldroom</k></li>
-                                <li><b>TICKETTIME</b>: tempo di validità del ticket</li>
-                                <li><b>Temp_load</b>: lo stato del carico</li>
-                                <li><b>TicketNumber</b>: per ottenere i numeri incrementali dei ticket</li>
-                            </ul>
-                        </li>
-                        <li>
-                            L'attore gestisce due possibili richieste: <i>storerequest</i> e <i>ticketrequest</i>
-                        </li>
-                        <li>
-                            <em>handlestore</em>: si verifica che nella <k>coldroom</k> ci sia abbastanza spazio per il carico:
-                            <ul>
-                                <li><i>storeaccepted</i>: la richiesta viene accettata e viene generato il ticket</li>
-                                <li><i>storerefused</i>: la richiesta viene rifiutata</li>
-                            </ul>
-                        </li>
-                        <li>
-                            <em>handleticket</em>: si calcola il tempo trascorso dall'emissione del ticket:
-                            <ul>
-                                <li>
-                                    <i>chargetaken</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
-                                    è accettata
-                                </li>
-                                <li><i>chargerefused</i>: il tempo trascorso è maggiore e la richiesta non è più valida</li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <h4><ks><a href="./sprint-0/trolley.qak">TROLLEY</a></ks></h4>
-                    <ul>
-                        <li>
-                            <em>s0</em>: il <ks>trolley</ks> invia la richiesta di <i>engage</i> al <ks>basicrobot</ks> e attende l'esito
-                            positivo dell'operazione per passare allo stato <em>waitrequest</em>
-                        </li>
-                        <li><em>waitrequest</em>: attende la ricezione di una richiesta per andare in <em>gotoindoor</em></li>
-                        <li>
-                            <em>takeload</em>: simula il caricamento del robot. Al termine, il robot dovrà inviare il messaggio di 
-                            <i>chargetaken</i> 
-                        </li>
-                        <li><em>gotocoldroom</em>: simula lo spostamento del robot dalla <k>INDOOR</k> alla <k>coldroom</k></li>
-                        <li><em>storeload</em>: il robot scarica il carico nella <k>coldroom</k>. Se non arrivano altre richieste torna in <k>HOME</k></li>
-                        <li><em>gohome</em>: simula lo spostamento del robot in <k>HOME</k></li>
-                        <li>
-                            <em>trolleyathome</em>: stato finale in cui viene inviata la richiesta di <i>disengage</i> al <ks>basicrobot</ks>
-                        </li>
-                    </ul>
-
-                </p>
-
-
-
-
-              
-            </p>
-
-            
-            
             
         </div>
 

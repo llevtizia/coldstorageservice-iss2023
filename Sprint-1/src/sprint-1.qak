@@ -6,6 +6,14 @@ Reply   engagedone    : engagedone( ARG )    for engage
 Reply   engagerefused : engagerefused( ARG ) for engage 
 
 Dispatch disengage    : disengage(ARG) 
+
+Request moverobot		: moverobot(TARGETX, TARGETY) //richiesta di muovere il robot in una determinata posizione
+Reply moverobotdone		: moverobotok(ARG) //risposta di conferma del movimento a posizione
+Reply moverobotfailed	: moverobotfailed(PLANDONE, PLANTODO) //risposta di movimento a posizione non riuscita
+
+Dispatch setrobotstate	: setpos(X,Y,D) //aggiorna la mappa con la nuova posizione e direzione
+Dispatch setdirection	: dir(D) //aggiorna la posizione del robot con la nuova direzione
+
 // ------------------------------------------------------------------------------
 
 // Messaggi dell'applicazione ---------------------------------------------------

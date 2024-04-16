@@ -263,3 +263,7 @@ kw {
     width: 300px; /* Fixed width for the left column */
     overflow: auto; /* Enable scrolling */
 }
+
+highlight {
+    background-color: yellow;
+}
