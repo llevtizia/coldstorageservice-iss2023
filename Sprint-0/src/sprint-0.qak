@@ -156,10 +156,10 @@ QActor trolley context ctxcoldstorageservice {
 		printCurrentMessage
 		println("$name START ") color magenta
 		println("$name engage BASIC ROBOT ") color magenta
-		//request basicrobot -m engage: engage(trolley,330)
+		request basicrobot -m engage: engage(trolley,330)
 	}
-	//Transition t0 whenReply engagedone -> waitrequest
-	Goto waitrequest
+	Transition t0 whenReply engagedone -> waitrequest
+	//Goto waitrequest
 	
 	// wait for a request
 	State waitrequest {

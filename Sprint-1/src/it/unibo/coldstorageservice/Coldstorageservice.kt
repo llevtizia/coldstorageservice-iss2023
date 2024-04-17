@@ -22,10 +22,12 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		
-				var MAXW = 1000			
-				var TICKETTIME = 15
-				var Temp_load = 0
-				var TicketNumber = 1	
+				var MAXW = 1000 		
+				var TICKETTIME = 30
+				var Temp_load = 0f
+				var TicketNumber = 1
+				
+				var requestsList = mutableListOf<Request?>()	
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -55,7 +57,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
-												var Load = payloadArg(0).toInt() 
+												var Load = payloadArg(0).toFloat() 
 												var FreeSpace = MAXW - Temp_load 
 								if(  Load <= FreeSpace  
 								 ){ 
@@ -64,6 +66,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								CommUtils.outgreen("$name accepting load of ${payloadArg(0)} kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
 								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)","serviceaccessgui"   )  
+								 
+													var StartTime = System.currentTimeMillis())
+													requestsList.add( Request(Ticket, Load, StartTime ) 
 								}
 								else
 								 {CommUtils.outgreen("$name refusing load of ${payloadArg(0)} kg")
@@ -81,9 +86,13 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(TICKET)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var Time = 10   
-								if(  Time < TICKETTIME  
-								 ){CommUtils.outgreen("$name accepting ticket n.${payloadArg(0)}")
+								 
+												var TicketNumber = payloadArg(0).toInt() 
+												var Request = requestsList.find { it.ticketNumber == TicketNumber }
+												var TimeInterval = ( System.currentTimeMillis() - Request?.timestamp ) / 1000 
+												var Weight = Request?.Weight
+								if(  TimeInterval < TICKETTIME  
+								 ){CommUtils.outgreen("$name accepting ticket n.$TicketNumber - weight: $Weight kg")
 								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))","serviceaccessgui"   )  
 								}
 								else
@@ -91,6 +100,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))","serviceaccessgui"   )  
 								 }
 						}
+						 requestsList.remove(Request)  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

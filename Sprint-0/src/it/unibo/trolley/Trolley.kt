@@ -28,12 +28,13 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						 	   
 						CommUtils.outmagenta("$name START ")
 						CommUtils.outmagenta("$name engage BASIC ROBOT ")
+						request("engage", "engage(trolley,330)" ,"basicrobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+					 transition(edgeName="t06",targetState="waitrequest",cond=whenReply("engagedone"))
 				}	 
 				state("waitrequest") { //this:State
 					action { //it:State
@@ -91,7 +92,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_storeload", 
 				 	 					  scope, context!!, "local_tout_"+name+"_storeload", 2000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t06",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
+					 transition(edgeName="t07",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
 				}	 
 				state("gohome") { //this:State
 					action { //it:State

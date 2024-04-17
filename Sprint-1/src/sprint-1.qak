@@ -7,12 +7,12 @@ Reply   engagerefused : engagerefused( ARG ) for engage
 
 Dispatch disengage    : disengage(ARG) 
 
-Request moverobot		: moverobot(TARGETX, TARGETY) //richiesta di muovere il robot in una determinata posizione
-Reply moverobotdone		: moverobotok(ARG) //risposta di conferma del movimento a posizione
-Reply moverobotfailed	: moverobotfailed(PLANDONE, PLANTODO) //risposta di movimento a posizione non riuscita
+Request moverobot		: moverobot(TARGETX, TARGETY) 
+Reply moverobotdone		: moverobotok(ARG) 
+Reply moverobotfailed	: moverobotfailed(PLANDONE, PLANTODO) 
 
-Dispatch setrobotstate	: setpos(X,Y,D) //aggiorna la mappa con la nuova posizione e direzione
-Dispatch setdirection	: dir(D) //aggiorna la posizione del robot con la nuova direzione
+Dispatch setrobotstate	: setpos(X,Y,D) 
+Dispatch setdirection	: dir(D) 
 
 // ------------------------------------------------------------------------------
 
@@ -85,13 +85,13 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	
 	// global variables
 	[#
-		var MAXW = 1000			
-		var TICKETTIME = 15
-		var Temp_load = 0
-		var TicketNumber = 1	
+		var MAXW = 1000 		
+		var TICKETTIME = 30
+		var Temp_load = 0f
+		var TicketNumber = 1
+		
+		var requestsList = mutableListOf<Request?>()	
 	#]
-	
-	// aggiungere una lista per memorizzare il tempo del ticket e il carico
 	
 	
 	State s0 initial {
@@ -111,7 +111,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	State handlestore {
 		onMsg( storerequest : storerequest( KG ) ) {
 			[# 
-				var Load = payloadArg(0).toInt() 
+				var Load = payloadArg(0).toFloat() 
 				var FreeSpace = MAXW - Temp_load 
 			#] 
 			if [# Load <= FreeSpace #] {
@@ -122,7 +122,12 @@ QActor coldstorageservice context ctxcoldstorageservice {
 				println("$name accepting load of ${payloadArg(0)} kg ") color green
 				println("$name generating ticket n. $TicketNumber") color green
 				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber ) caller==serviceaccessgui
+				// update load??
 				// add the ticket to the list
+				[# 
+					var StartTime = System.currentTimeMillis())
+					requestsList.add( Request(Ticket, Load, StartTime ) 
+				#]
 			}
 			
 			else {
@@ -136,13 +141,18 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	// handle the second request
 	State handleticket {
 		onMsg( ticketrequest : ticketrequest( TICKET ) ) {
+			[# 
+				var TicketNumber = payloadArg(0).toInt() 
+				var Request = requestsList.find { it.ticketNumber == TicketNumber }
+				var TimeInterval = ( System.currentTimeMillis() - Request?.timestamp ) / 1000 
+				var Weight = Request?.Weight
+			#]
 			// need to check the time
-			[# var Time = 10  #] // System.currentTimeMillis() - time of the ticket
-			if [# Time < TICKETTIME #] {
-				println("$name accepting ticket n.${payloadArg(0)}") color green
+			if [# TimeInterval < TICKETTIME #] {
+				println("$name accepting ticket n.$TicketNumber - weight: $Weight kg") color green
 				replyTo ticketrequest with chargetaken : chargetaken( payloadArg(0) ) caller==serviceaccessgui
 				
-				// update load
+				// update load??
 			}
 			
 			else {
@@ -151,6 +161,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 			}
 		}
 		// remove the request from the list
+		[# requestsList.remove(Request) #]
 	}
 	Goto waitrequest
 }
