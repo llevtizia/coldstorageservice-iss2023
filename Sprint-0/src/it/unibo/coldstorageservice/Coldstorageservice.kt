@@ -54,10 +54,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 
-												var Load = payloadArg(0).toInt() 
-												var FreeSpace = MAXW - Temp_load 
-								if(  Load <= FreeSpace  
+								if(  payloadArg(0).toInt() < MAXW - Temp_load  
 								 ){ 
 													val Ticket = TicketNumber
 													TicketNumber = TicketNumber + 1

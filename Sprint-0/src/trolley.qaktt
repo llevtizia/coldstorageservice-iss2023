@@ -1,0 +1,42 @@
+System trolley
+
+// Messaggi per le interazioni del robot ----------------------------------------
+Request engage        : engage(OWNER, STEPTIME)	
+Reply   engagedone    : engagedone(ARG)    for engage
+Reply   engagerefused : engagerefused(ARG) for engage
+
+Dispatch disengage    : disengage(ARG)
+
+//Endosimbiosi di robotpos
+Request moverobot    :  moverobot(TARGETX, TARGETY)  
+Reply moverobotdone  :  moverobotok(ARG)                    for moverobot
+Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
+
+Context ctxtrolley		ip [host="localhost" port=8001]
+Context ctxbasicrobot   ip [host="127.0.0.1" port=8020]
+
+ExternalQActor basicrobot context ctxbasicrobot
+
+// 3 - trolley
+QActor trolley context ctxtrolley {
+	  
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color magenta
+		println("$name engage BASIC ROBOT ") color magenta
+		request basicrobot -m engage: engage(trolley, 330)
+	}
+	Transition t0 whenReply engagedone -> waitrequest
+	//Goto waitrequest
+	
+	// wait for a request
+	State waitrequest {
+		printCurrentMessage
+		onMsg( engagedone : engagedone( ARG ) ) {
+			println("$name engage done!") color magenta
+			delay 500
+		}
+		[# System.exit(0) #]
+	}
+	 
+}

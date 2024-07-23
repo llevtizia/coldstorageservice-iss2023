@@ -40,7 +40,6 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					action { //it:State
 						CommUtils.outmagenta("$name waiting for requests...")
 						 CommUtils.waitTheUser("$name HIT to send takeCharge command to the trolley ")  
-						delay(500) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -51,7 +50,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				state("gotoindoor") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name moving to INDOOR")
-						delay(500) 
+						delay(2000) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -62,7 +61,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				state("takeload") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name taking the load...")
-						delay(500) 
+						 CommUtils.waitTheUser("$name HIT to terminate load")  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -73,7 +72,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				state("gotocoldroom") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name moving to COLDROOM")
-						delay(5000) 
+						delay(2000) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -84,7 +83,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				state("storeload") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name storing the load...")
-						delay(500) 
+						 CommUtils.waitTheUser("$name HIT to terminate.")  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

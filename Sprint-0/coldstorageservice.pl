@@ -2,13 +2,11 @@
 % coldstorageservice description   
 %====================================================================================
 request( engage, engage(OWNER,STEPTIME) ). %richiesta ingaggio
-reply( engagedone, engagedone(ARG) ).  %%for engage
-reply( engagerefused, engagerefused(ARG) ).  %%for engage
 dispatch( disengage, disengage(ARG) ).
 request( storerequest, storerequest(KG) ). %richiesta deposito KG
 request( ticketrequest, ticketrequest(TICKET) ). %richiesta invio ticket
 %====================================================================================
-context(ctxcoldstorageservice, "localhost",  "TCP", "8015").
+context(ctxcoldstorageservice, "localhost",  "TCP", "9990").
 context(ctxbasicrobot, "127.0.0.1",  "TCP", "8020").
  qactor( basicrobot, ctxbasicrobot, "external").
   qactor( serviceaccessgui, ctxcoldstorageservice, "it.unibo.serviceaccessgui.Serviceaccessgui").

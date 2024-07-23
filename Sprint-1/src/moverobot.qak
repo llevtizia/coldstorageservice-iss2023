@@ -1,0 +1,196 @@
+System coldstorageservice
+
+// Messaggi per le interazioni del robot ----------------------------------------
+Request engage        : engage( OWNER, STEPTIME ) "richiesta ingaggio"
+Reply   engagedone    : engagedone( ARG )    for engage  
+Reply   engagerefused : engagerefused( ARG ) for engage 
+
+Dispatch disengage    : disengage(ARG) 
+
+Request moverobot		: moverobot(TARGETX, TARGETY) 
+Reply moverobotdone		: moverobotok(ARG) 
+Reply moverobotfailed	: moverobotfailed(PLANDONE, PLANTODO) 
+
+Dispatch setrobotstate	: setpos(X,Y,D) 
+Dispatch setdirection	: dir(D) 
+
+// ------------------------------------------------------------------------------
+
+// Messaggi dell'applicazione ---------------------------------------------------
+Request storerequest	: storerequest( X ) 			"richiesta deposito KG"
+Reply storeaccepted		: storeaccepted( X )  	
+Reply storerefused		: storerefused( X )  		
+
+Request ticketrequest	: ticketrequest( X ) 	"richiesta invio ticket"
+Reply ticketaccepted	: ticketaccepted( X ) 		
+Reply ticketrefused		: ticketrefused( X ) 	
+
+Request gotakecharge	: gotakecharge( X )
+Reply chargetaken		: chargetaken( X )
+//-------------------------------------------------------------------------------
+
+Context ctxcoldstorageservice ip [host="localhost" port=8015]
+Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
+
+ExternalQActor basicrobot context ctxbasicrobot
+  
+  
+// 1 - service access gui
+QActor serviceaccessgui context ctxcoldstorageservice {
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color blue
+	}
+	Goto sendrequest
+	
+	// send the first request to the service
+	State sendrequest {
+		[# var Counter = 0  #]
+		println("$name SEND REQUEST: $Counter") color blue
+		request coldstorageservice -m storerequest : storerequest($Counter)
+	}
+	Transition t0 whenReply storeaccepted -> endwork
+				whenReply storerefused -> endwork
+					
+	// end work
+	State endwork {
+		onMsg( storeaccepted : storeaccepted( X ) ) {
+			println("$name request n. ${payloadArg(0)} accepted. END WORK") color blue
+		}
+		onMsg( storerefused : storerefused( X ) ) {
+			println("$name request n. ${payloadArg(0)} refused. END WORK") color blue
+		}
+	}
+}
+
+
+ 
+// 2 - coldstorageservice
+QActor coldstorageservice context ctxcoldstorageservice {
+	
+	// model the cold room
+	[#
+		var MAXW = 1000			
+		var TICKETTIME = 15
+		var Current_load = 0
+		var TicketNumber = 1	
+	#]
+
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color green
+	}
+	Goto waitrequest
+	
+	// wait request
+	State waitrequest {
+		println("$name waiting for requests... ") color green
+	}
+	Transition t0 whenRequest storerequest -> handlestore
+				
+	// handle the first request			
+	State handlestore {
+		onMsg( storerequest : storerequest( X ) ) {
+			[# 
+				var CounterRequest = payloadArg(0).toInt()
+			#]
+			println("$name received request n. $CounterRequest ") color green
+			replyTo storerequest with storeaccepted : storeaccepted( $CounterRequest )
+			request  trolley -m gotakecharge : gotakecharge( $CounterRequest ) 
+			// add the ticket to the list
+		}
+	}
+	Goto waitrequest
+}
+
+
+// 3 - trolley
+QActor trolley context ctxcoldstorageservice {
+	
+	State s0 initial {
+		printCurrentMessage
+		println("$name START ") color magenta
+		println("$name engage BASIC ROBOT ") color magenta
+		request basicrobot -m engage: engage(trolley, 330)
+	}
+	Transition t0 whenReply engagedone -> waitrequest
+	
+	
+	// wait for a request
+	State waitrequest {
+		forward basicrobot -m setrobotstate : setpos(0,0,down)
+		println("$name waiting for requests...") color magenta
+	}  
+	Transition t0 whenRequest gotakecharge -> gotoindoor
+	
+	// go to indoot
+	State gotoindoor {
+		println("$name moving to INDOOR") color magenta
+		
+		onMsg( gotakecharge : stgotakechargeore( TICKET ) ){
+			
+			[# val Ticket="${payloadArg(0)}" #]		
+			println("$name charging request ticket n. $Ticket") color magenta
+			replyTo gotakecharge with chargetaken : chargetaken( $Ticket )
+			//updateResource			
+      	}      	
+		delay 500 // simulate the movement
+		request basicrobot -m moverobot : moverobot (0,4) //(0,4) position of INDOOR
+	}
+	Transition t0 whenReply moverobotdone -> takeload
+					whenReply moverobotfailed -> failed
+	
+	// take the load 
+	State takeload {
+		println("$name taking the load...") color magenta
+		
+		//[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+		delay 500
+		// replyTo ticketrequest with chargetaken
+	}
+	Goto gotocoldroom
+	
+	// go to cold room
+	State gotocoldroom {
+		println("$name moving to COLDROOM") color magenta
+		request basicrobot -m moverobot: moverobot(4,3)
+		delay 5000 // simulate the movement
+	}
+	Transition t0 whenReply moverobotdone -> storeload
+						whenReply moverobotfailed -> failed
+	
+	// store the load
+	State storeload {
+		println("$name storing the load...") color magenta
+		//[# CommUtils.waitTheUser("$name HIT to terminate.") #] //simulate the command 
+		delay 500
+		// waits for requests
+	} 
+	Transition t0 whenTime 2000 -> gohome
+		 			whenRequest gotakecharge -> gotoindoor
+	 
+	// go home
+	State gohome{
+		println("$name going HOME...") color magenta
+		request basicrobot -m moverobot: moverobot (0 ,0)
+		delay 2000 // simulate the movement 
+	}
+	Transition t0 whenReply moverobotdone -> trolleyathome
+						whenReply moverobotfailed -> failed
+	
+	// at home
+	State trolleyathome {
+		println("$name trolley at home") color magenta
+		forward basicrobot -m disengage : disengage(trolley)
+		
+		println("$name  disengaged") color magenta
+		delay 1000 //avoid to premature abort of connection
+		[# System.exit(0) #]
+	}
+	
+	//failed
+	State failed {
+		println("$name moverobot to indoor failed") color magenta
+	}
+}

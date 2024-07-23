@@ -36,48 +36,26 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 				}	 
 				state("sendrequest") { //this:State
 					action { //it:State
-						 var Load = 50   
-						CommUtils.outblue("$name SEND REQUEST: $Load kg")
-						request("storerequest", "storerequest($Load)" ,"coldstorageservice" )  
+						 var Counter = 0   
+						CommUtils.outblue("$name SEND REQUEST: $Counter")
+						request("storerequest", "storerequest($Counter)" ,"coldstorageservice" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t00",targetState="sendticket",cond=whenReply("storeaccepted"))
+					 transition(edgeName="t00",targetState="endwork",cond=whenReply("storeaccepted"))
 					transition(edgeName="t01",targetState="endwork",cond=whenReply("storerefused"))
-				}	 
-				state("sendticket") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET)"), Term.createTerm("storeaccepted(TICKET)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var Ticket = "${payloadArg(0)}"  
-								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $Ticket")
-								delay(3000) 
-								CommUtils.outblue("$name SENDING TICKET: $Ticket")
-								request("ticketrequest", "ticketrequest($Ticket)" ,"coldstorageservice" )  
-						}
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition(edgeName="t02",targetState="endwork",cond=whenReply("chargetaken"))
-					transition(edgeName="t03",targetState="endwork",cond=whenReply("chargerefused"))
 				}	 
 				state("endwork") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("storerefused(KG)"), Term.createTerm("storerefused(KG)"), 
+						if( checkMsgContent( Term.createTerm("storeaccepted(X)"), Term.createTerm("storeaccepted(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name store refused. END WORK")
+								CommUtils.outblue("$name request n. ${payloadArg(0)} accepted. END WORK")
 						}
-						if( checkMsgContent( Term.createTerm("chargetaken(TICKET)"), Term.createTerm("chargetaken(KG)"), 
+						if( checkMsgContent( Term.createTerm("storerefused(X)"), Term.createTerm("storerefused(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name charge taken. END WORK")
-						}
-						if( checkMsgContent( Term.createTerm("chargerefused(TICKET)"), Term.createTerm("chargerefused(TIME)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name charge refused. END WORK")
+								CommUtils.outblue("$name request n. ${payloadArg(0)} refused. END WORK")
 						}
 						//genTimer( actor, state )
 					}
