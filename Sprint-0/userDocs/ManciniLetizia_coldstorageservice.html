@@ -246,7 +246,7 @@
                 <p>
                     L'architettura del sistema è la seguente:
                     <br><br>
-                    <img src="../coldstorageservicearch.png" alt="basic robot arch" class="small_image">
+                    <img src="../coldstorageservicearch.png" alt="basic robot arch" class="medium_image">
                 </p>
                 
                 <p>
@@ -261,13 +261,13 @@
                     </ul>
 
                     <br>
-                    <h4><ks><a href="./sprint-0/serviceaccessgui.qak">SERVICE ACCESS GUI</a></ks></h4>
+                    <h4><ks><a href="./sprint-0/serviceaccessgui.qaktt">SERVICE ACCESS GUI</a></ks></h4>
                     <ul>
                         <li>
                             La <ks>serviceaccessgui</ks> è modellata come un QActor che simula le interazioni dell'utente con il sistema
                         </li>
                         <li>
-                            <em>sendrequest</em>: invia la richiesta di <i>storerequest</i> al <ks>coldstorageservice</ks> e attende una
+                            <em>sendstore</em>: invia la richiesta di <i>storerequest</i> al <ks>coldstorageservice</ks> e attende una
                             risposta che può essere 
                             <ul>
                                 <li>negativa: <i>storerefused</i> che porta allo stato <em>endwork</em></li>
@@ -276,19 +276,19 @@
                         </li>
                         <li>
                             <em>sendticket</em>: si simula lo spostamento dell'utente all'<k>INDOOR</k> e l'invio del numero del ticket al
-                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>chargetaken</i>, <i>chargerefused</i>
+                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>ticketaccepted</i>, <i>ticketrefused</i>
 
                         </li>
                     </ul>
 
-                    <h4><ks><a href="./sprint-0/coldstorageservice.qak">COLD STORAGE SERVICE</a></ks></h4>
+                    <h4><ks><a href="./sprint-0/coldstorageservice.qaktt">COLD STORAGE SERVICE</a></ks></h4>
                     <ul>
                         <li>
                             Il <ks>coldstorageservice</ks> definisce le variabili di sistema:
                             <ul>
                                 <li><b>MAXW</b>: carico massimo della <k>coldroom</k></li>
                                 <li><b>TICKETTIME</b>: tempo di validità del ticket</li>
-                                <li><b>Temp_load</b>: lo stato del carico</li>
+                                <li><b>Current_load</b>: il carico attuale della <k>coldroom</k></li>
                                 <li><b>TicketNumber</b>: per ottenere i numeri incrementali dei ticket</li>
                             </ul>
                         </li>
@@ -306,28 +306,33 @@
                             <em>handleticket</em>: si calcola il tempo trascorso dall'emissione del ticket:
                             <ul>
                                 <li>
-                                    <i>chargetaken</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
+                                    <i>ticketaccepted</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
                                     è accettata
                                 </li>
-                                <li><i>chargerefused</i>: il tempo trascorso è maggiore e la richiesta non è più valida</li>
+                                <li><i>ticketrefused</i>: il tempo trascorso è maggiore e la richiesta non è più valida</li>
                             </ul>
                         </li>
                     </ul>
 
-                    <h4><ks><a href="./sprint-0/trolley.qak">TROLLEY</a></ks></h4>
+                    <h4><ks><a href="./sprint-0/trolley.qaktt">TROLLEY</a></ks></h4>
                     <ul>
                         <li>
                             <em>s0</em>: il <ks>trolley</ks> invia la richiesta di <i>engage</i> al <ks>basicrobot</ks> e attende l'esito
                             positivo dell'operazione per passare allo stato <em>waitrequest</em>
                         </li>
-                        <li><em>waitrequest</em>: attende la ricezione di una richiesta per andare in <em>gotoindoor</em></li>
+                        <li><em>waitrequest</em>: attende la ricezione di una richiesta <i>gotakecharge</i> per iniziare il movimento 
+                             e andare verso la INDOOR port</li>
+                        <li>
+                            <em>gotoindoor</em>: il robot si sposta in posizione <b>(0, 4)</b>
+                        </li>
                         <li>
                             <em>takeload</em>: simula il caricamento del robot. Al termine, il robot dovrà inviare il messaggio di 
                             <i>chargetaken</i> 
                         </li>
-                        <li><em>gotocoldroom</em>: simula lo spostamento del robot dalla <k>INDOOR</k> alla <k>coldroom</k></li>
+                        <li><em>gotocoldroom</em>: il robot si sposta dalla <k>INDOOR</k> in posizione <b>(0, 4)</b> alla 
+                            <k>coldroom</k> in posizione <b>(4, 3)</b></li>
                         <li><em>storeload</em>: il robot scarica il carico nella <k>coldroom</k>. Se non arrivano altre richieste torna in <k>HOME</k></li>
-                        <li><em>gohome</em>: simula lo spostamento del robot in <k>HOME</k></li>
+                        <li><em>gohome</em>: il robot ritorna in <k>HOME</k>, in posizione <b>(0, 0)</b></li>
                         <li>
                             <em>trolleyathome</em>: stato finale in cui viene inviata la richiesta di <i>disengage</i> al <ks>basicrobot</ks>
                         </li>

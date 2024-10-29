@@ -4,41 +4,56 @@ QActor serviceaccessgui context ctxcoldstorageservice {
 		printCurrentMessage
 		println("$name START ") color blue
 	}
-	Goto sendrequest
+	Goto sendstore
 	
 	// send the first request to the service
-	State sendrequest {
-		[# var Load = 50  #]
-		println("$name SEND REQUEST: $Load kg") color blue
-		request coldstorageservice -m storerequest : storerequest($Load)
+	State sendstore {
+		[# var CurrentWeight = ( Math.round( Math.random() * 100 ) )  #]
+		println("$name SEND REQUEST kg $CurrentWeight") color blue
+		request coldstorageservice -m storerequest : storerequest($CurrentWeight)
 	}
 	Transition t0 whenReply storeaccepted -> sendticket
 				whenReply storerefused -> endwork
 				
 	// send the second request to the service	
 	State sendticket {
-		onMsg( storeaccepted : storeaccepted( TICKET ) ) {
-			[# var Ticket = "${payloadArg(0)}" #]
-			println("$name MOVING TO INDOOR --> ticket: $Ticket") color blue
-			delay 3000 // time for the user to move to the indoor port
+		
+		delay 1000
+		onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
 			
-			println("$name SENDING TICKET: $Ticket") color blue
-			request coldstorageservice -m ticketrequest : ticketrequest($Ticket)
+			[# 
+				var TicketNumber = payloadArg(0)
+				var Load = payloadArg(1)
+			#]
+			
+			println("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
+			
+			delay 3000
+			
+			println("$name SENDING TICKET: $TicketNumber") color blue
+			request coldstorageservice -m ticketrequest : ticketrequest($TicketNumber)
 		}
 	}
-	Transition t0 whenReply chargetaken -> endwork
-				whenReply chargerefused -> endwork
+	Transition t0 whenReply ticketaccepted -> endwork
+				whenReply ticketrefused -> endwork
 				
 	// end work
 	State endwork {
-		onMsg( storerefused : storerefused( KG ) ) {
-			println("$name store refused. END WORK") color blue
+		onMsg( storerefused : storerefused( X ) ) {
+			[# var Load = payloadArg(0) #]
+			println("$name - request of $Load kg refused. Not enough free space...") color blue
 		}
-		onMsg( chargetaken : chargetaken( KG ) ) {
-			println("$name charge taken. END WORK") color blue
+		
+		onMsg( ticketrefused : ticketrefused( X ) ) {
+			
+			[# var TicketNumber = payloadArg(0) #]
+			println("$name - request n. $TicketNumber refused. Too much time has passed...") color blue
 		}
-		onMsg( chargerefused : chargerefused( TIME ) ) {
-			println("$name charge refused. END WORK") color blue
+		
+		onMsg( ticketaccepted : ticketaccepted( X ) ) {
+			
+			[# var TicketNumber = payloadArg(0) #]
+			println("$name - request n. $TicketNumber accepted. All requests sent!") color blue
 		}
 	}
 }

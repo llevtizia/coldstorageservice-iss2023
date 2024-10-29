@@ -1,12 +1,14 @@
 QActor coldstorageservice context ctxcoldstorageservice {
 	
-	// global constants
+	// model the cold room
 	[#
-		var MAXW = 1000			
+		var MAXW = 200		
 		var TICKETTIME = 15
-		var Temp_load = 0
+		var Current_load = 0f
 		var TicketNumber = 1	
 	#]
+	
+	// val list = mutableListOf<Triple<Int, Float, Long>>() 
 	
 	
 	State s0 initial {
@@ -25,15 +27,24 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	// handle the first request			
 	State handlestore {
 		onMsg( storerequest : storerequest( KG ) ) {
-			if [# payloadArg(0) < MAXW - Temp_load #] {
-				println("$name accepting load of ${payloadArg(0) kg") color green
+			[# 
+				var LoadToStore = payloadArg(0).toFloat() 
+				var FreeSpace = MAXW - Current_load 
+			#] 
+			if [# LoadToStore <= FreeSpace #] {
+				
+				println("$name accepting load of $LoadToStore kg ") color green
 				println("$name generating ticket n. $TicketNumber") color green
-				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber )
+				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber, $LoadToStore  ) 
+				// add the ticket to the list
+				//list.add( Triple( TicketNumber, LoadToStore, System.currentTimeMillis() ) )
+				
+				[# TicketNumber = TicketNumber + 1 #]
 			}
 			
 			else {
-				println("$name refusing load of ${payloadArg(0) kg") color green
-				replyTo storerequest with storerefused : storerefused( payloadArg(0) )
+				println("$name refusing load of $LoadToStore kg") color green
+				replyTo storerequest with storerefused : storerefused( $LoadToStore ) 
 			}
 		}
 	}
@@ -43,19 +54,27 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	State handleticket {
 		onMsg( ticketrequest : ticketrequest( TICKET ) ) {
 			// need to check the time
-			[# var Time = 10  #]
+			[# 
+				var Time = 10  
+				var Ticket = payloadArg(0).toInt()
+			#] // System.currentTimeMillis() - time of the ticket
+			
 			if [# Time < TICKETTIME #] {
-				println("$name accepting ticket n.${payloadArg(0)") color green
-				replyTo ticketrequest with chargetaken : chargetaken( payloadArg(0) )
+				println("$name accepting ticket n. $Ticket ") color green
+				replyTo ticketrequest with ticketaccepted : ticketaccepted( $Ticket ) 
 				
+				println("$name sending request to trolley...") color green
+				forward trolley -m gotakecharge : gotakecharge( $Ticket )
 				// update load
 			}
 			
 			else {
-				println("$name refusing ticket n.${payloadArg(0)") color green
-				replyTo ticketrequest with chargerefused : chargerefused( payloadArg(0) )
+				println("$name refusing ticket n. $Ticket - EXPIRED ") color green
+				
+				replyTo ticketrequest with ticketrefused : ticketrefused( $TicketNumber )
 			}
 		}
+		// remove the request from the list
 	}
 	Goto waitrequest
 }

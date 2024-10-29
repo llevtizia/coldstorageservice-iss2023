@@ -28,7 +28,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						 	   
 						CommUtils.outmagenta("$name START ")
 						CommUtils.outmagenta("$name engage BASIC ROBOT ")
-						request("engage", "engage(trolley,330)" ,"basicrobot" )  
+						request("engage", "engage(trolley,150)" ,"basicrobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -38,30 +38,35 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				}	 
 				state("waitrequest") { //this:State
 					action { //it:State
+						forward("setrobotstate", "setpos(0,0,down)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name waiting for requests...")
-						 CommUtils.waitTheUser("$name HIT to send takeCharge command to the trolley ")  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="gotoindoor", cond=doswitch() )
+					 transition(edgeName="t07",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
 				}	 
 				state("gotoindoor") { //this:State
 					action { //it:State
-						CommUtils.outmagenta("$name moving to INDOOR")
-						delay(2000) 
+						if( checkMsgContent( Term.createTerm("gotakecharge(X)"), Term.createTerm("gotakecharge(TICKET)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outmagenta("$name moving to INDOOR")
+						}
+						delay(500) 
+						request("moverobot", "moverobot(0,4)" ,"basicrobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="takeload", cond=doswitch() )
+					 transition(edgeName="t08",targetState="takeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t09",targetState="failed",cond=whenReply("moverobotfailed"))
 				}	 
 				state("takeload") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name taking the load...")
-						 CommUtils.waitTheUser("$name HIT to terminate load")  
+						delay(500) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -72,18 +77,20 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				state("gotocoldroom") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name moving to COLDROOM")
-						delay(2000) 
+						request("moverobot", "moverobot(4,3)" ,"basicrobot" )  
+						delay(500) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="storeload", cond=doswitch() )
+					 transition(edgeName="t010",targetState="storeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t011",targetState="failed",cond=whenReply("moverobotfailed"))
 				}	 
 				state("storeload") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name storing the load...")
-						 CommUtils.waitTheUser("$name HIT to terminate.")  
+						delay(2000) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -91,26 +98,39 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_storeload", 
 				 	 					  scope, context!!, "local_tout_"+name+"_storeload", 2000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t07",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
+					 transition(edgeName="t012",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
+					transition(edgeName="t013",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
 				}	 
 				state("gohome") { //this:State
 					action { //it:State
 						CommUtils.outmagenta("$name going HOME...")
+						request("moverobot", "moverobot(0,0)" ,"basicrobot" )  
 						delay(2000) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="trolleyathome", cond=doswitch() )
+					 transition(edgeName="t014",targetState="trolleyathome",cond=whenReply("moverobotdone"))
+					transition(edgeName="t015",targetState="failed",cond=whenReply("moverobotfailed"))
 				}	 
 				state("trolleyathome") { //this:State
 					action { //it:State
+						forward("setrobotstate", "setpos(0,0,down)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name trolley at home")
 						forward("disengage", "disengage(trolley)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name  disengaged")
 						delay(1000) 
 						 System.exit(0)  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+				}	 
+				state("failed") { //this:State
+					action { //it:State
+						CommUtils.outmagenta("$name moverobot to indoor failed")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

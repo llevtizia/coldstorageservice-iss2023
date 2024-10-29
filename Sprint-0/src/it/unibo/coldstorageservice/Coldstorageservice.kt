@@ -22,9 +22,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		
-				var MAXW = 1000			
+				var MAXW = 200		
 				var TICKETTIME = 15
-				var Temp_load = 0
+				var Current_load = 0f
 				var TicketNumber = 1	
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
@@ -54,17 +54,18 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								if(  payloadArg(0).toInt() < MAXW - Temp_load  
-								 ){ 
-													val Ticket = TicketNumber
-													TicketNumber = TicketNumber + 1
-								CommUtils.outgreen("$name accepting load of ${payloadArg(0)} kg ")
+								 
+												var LoadToStore = payloadArg(0).toFloat() 
+												var FreeSpace = MAXW - Current_load 
+								if(  LoadToStore <= FreeSpace  
+								 ){CommUtils.outgreen("$name accepting load of $LoadToStore kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
-								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)","serviceaccessgui"   )  
+								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)"   )  
+								 TicketNumber = TicketNumber + 1  
 								}
 								else
-								 {CommUtils.outgreen("$name refusing load of ${payloadArg(0)} kg")
-								 answer("storerequest", "storerefused", "storerefused(payloadArg(0))","serviceaccessgui"   )  
+								 {CommUtils.outgreen("$name refusing load of $LoadToStore kg")
+								 answer("storerequest", "storerefused", "storerefused($LoadToStore)"   )  
 								 }
 						}
 						//genTimer( actor, state )
@@ -78,14 +79,18 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(TICKET)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var Time = 10   
+								 
+												var Time = 10  
+												var Ticket = payloadArg(0).toInt()
 								if(  Time < TICKETTIME  
-								 ){CommUtils.outgreen("$name accepting ticket n.${payloadArg(0)}")
-								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))","serviceaccessgui"   )  
+								 ){CommUtils.outgreen("$name accepting ticket n. $Ticket ")
+								answer("ticketrequest", "ticketaccepted", "ticketaccepted($Ticket)"   )  
+								CommUtils.outgreen("$name sending request to trolley...")
+								forward("gotakecharge", "gotakecharge($Ticket)" ,"trolley" ) 
 								}
 								else
-								 {CommUtils.outgreen("$name refusing ticket n.${payloadArg(0)}")
-								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))","serviceaccessgui"   )  
+								 {CommUtils.outgreen("$name refusing ticket n. $Ticket - EXPIRED ")
+								 answer("ticketrequest", "ticketrefused", "ticketrefused($TicketNumber)"   )  
 								 }
 						}
 						//genTimer( actor, state )

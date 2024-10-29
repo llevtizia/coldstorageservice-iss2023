@@ -31,8 +31,6 @@ with Diagram('coldstorageserviceArch', show=False, outformat='png', graph_attr=g
           trolley=Custom('trolley','./qakicons/symActorSmall.png')
      with Cluster('ctxbasicrobot', graph_attr=nodeattr):
           basicrobot=Custom('basicrobot(ext)','./qakicons/externalQActor.png')
-     trolley >> Edge(color='magenta', style='solid', decorate='true', label='<engage<font color="darkgreen"> engagedone engagerefused</font> &nbsp; moverobot &nbsp; >',  fontcolor='magenta') >> basicrobot
-     serviceaccessgui >> Edge(color='magenta', style='solid', decorate='true', label='<storerequest &nbsp; >',  fontcolor='magenta') >> coldstorageservice
-     coldstorageservice >> Edge(color='magenta', style='solid', decorate='true', label='<gotakecharge &nbsp; >',  fontcolor='magenta') >> trolley
-     trolley >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; disengage &nbsp; >',  fontcolor='blue') >> basicrobot
+     serviceaccessgui >> Edge(color='magenta', style='solid', decorate='true', label='<storerequest &nbsp; ticketrequest &nbsp; >',  fontcolor='magenta') >> coldstorageservice
+     trolley >> Edge(color='blue', style='solid',  decorate='true', label='<disengage &nbsp; >',  fontcolor='blue') >> basicrobot
 diag

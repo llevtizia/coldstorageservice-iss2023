@@ -32,13 +32,13 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="sendrequest", cond=doswitch() )
+					 transition( edgeName="goto",targetState="sendstore", cond=doswitch() )
 				}	 
-				state("sendrequest") { //this:State
+				state("sendstore") { //this:State
 					action { //it:State
-						 var Load = 50   
-						CommUtils.outblue("$name SEND REQUEST: $Load kg")
-						request("storerequest", "storerequest($Load)" ,"coldstorageservice" )  
+						 var CurrentWeight = ( Math.round( Math.random() * 100 ) )   
+						CommUtils.outblue("$name SEND REQUEST kg $CurrentWeight")
+						request("storerequest", "storerequest($CurrentWeight)" ,"coldstorageservice" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -49,35 +49,41 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 				}	 
 				state("sendticket") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET)"), Term.createTerm("storeaccepted(TICKET)"), 
+						delay(1000) 
+						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET,KG)"), Term.createTerm("storeaccepted(TICKET,KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var Ticket = "${payloadArg(0)}"  
-								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $Ticket")
+								 
+												var TicketNumber = payloadArg(0)
+												var Load = payloadArg(1)
+								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ")
 								delay(3000) 
-								CommUtils.outblue("$name SENDING TICKET: $Ticket")
-								request("ticketrequest", "ticketrequest($Ticket)" ,"coldstorageservice" )  
+								CommUtils.outblue("$name SENDING TICKET: $TicketNumber")
+								request("ticketrequest", "ticketrequest($TicketNumber)" ,"coldstorageservice" )  
 						}
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="endwork",cond=whenReply("chargetaken"))
-					transition(edgeName="t03",targetState="endwork",cond=whenReply("chargerefused"))
+					 transition(edgeName="t02",targetState="endwork",cond=whenReply("ticketaccepted"))
+					transition(edgeName="t03",targetState="endwork",cond=whenReply("ticketrefused"))
 				}	 
 				state("endwork") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("storerefused(KG)"), Term.createTerm("storerefused(KG)"), 
+						if( checkMsgContent( Term.createTerm("storerefused(X)"), Term.createTerm("storerefused(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name store refused. END WORK")
+								 var Load = payloadArg(0)  
+								CommUtils.outblue("$name - request of $Load kg refused. Not enough free space...")
 						}
-						if( checkMsgContent( Term.createTerm("chargetaken(TICKET)"), Term.createTerm("chargetaken(KG)"), 
+						if( checkMsgContent( Term.createTerm("ticketrefused(TICKET)"), Term.createTerm("ticketrefused(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name charge taken. END WORK")
+								 var TicketNumber = payloadArg(0)  
+								CommUtils.outblue("$name - request n. $TicketNumber refused. Too much time has passed...")
 						}
-						if( checkMsgContent( Term.createTerm("chargerefused(TICKET)"), Term.createTerm("chargerefused(TIME)"), 
+						if( checkMsgContent( Term.createTerm("ticketaccepted(TICKET)"), Term.createTerm("ticketaccepted(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								CommUtils.outblue("$name charge refused. END WORK")
+								 var TicketNumber = payloadArg(0)  
+								CommUtils.outblue("$name - request n. $TicketNumber accepted. All requests sent!")
 						}
 						//genTimer( actor, state )
 					}

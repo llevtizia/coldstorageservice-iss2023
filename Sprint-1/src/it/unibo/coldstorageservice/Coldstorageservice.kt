@@ -22,10 +22,12 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		
-				var MAXW = 1000			
-				var TICKETTIME = 15
-				var Current_load = 0
-				var TicketNumber = 1	
+				var MAXW = 1000 		
+				var TICKETTIME = 30
+				var Temp_load = 0f
+				var TicketNumber = 1
+				
+				var requestsList = mutableListOf<Request?>()	
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -47,18 +49,58 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="handlestore",cond=whenRequest("storerequest"))
+					 transition(edgeName="t04",targetState="handlestore",cond=whenRequest("storerequest"))
+					transition(edgeName="t05",targetState="handleticket",cond=whenRequest("ticketrequest"))
 				}	 
 				state("handlestore") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("storerequest(X)"), Term.createTerm("storerequest(X)"), 
+						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
-												var CounterRequest = payloadArg(0).toInt()
-								CommUtils.outgreen("$name received request n. $CounterRequest ")
-								answer("storerequest", "storeaccepted", "storeaccepted($CounterRequest)"   )  
-								request("gotakecharge", "gotakecharge($CounterRequest)" ,"trolley" )  
+												var Load = payloadArg(0).toFloat() 
+												var FreeSpace = MAXW - Temp_load 
+								if(  Load <= FreeSpace  
+								 ){ 
+													val Ticket = TicketNumber
+													TicketNumber = TicketNumber + 1
+								CommUtils.outgreen("$name accepting load of ${payloadArg(0)} kg ")
+								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
+								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)","serviceaccessgui"   )  
+								 
+													var StartTime = System.currentTimeMillis())
+													requestsList.add( Request(Ticket, Load, StartTime ) 
+								}
+								else
+								 {CommUtils.outgreen("$name refusing load of ${payloadArg(0)} kg")
+								 answer("storerequest", "storerefused", "storerefused(payloadArg(0))","serviceaccessgui"   )  
+								 }
 						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handleticket") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(TICKET)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 
+												var TicketNumber = payloadArg(0).toInt() 
+												var Request = requestsList.find { it.ticketNumber == TicketNumber }
+												var TimeInterval = ( System.currentTimeMillis() - Request?.timestamp ) / 1000 
+												var Weight = Request?.Weight
+								if(  TimeInterval < TICKETTIME  
+								 ){CommUtils.outgreen("$name accepting ticket n.$TicketNumber - weight: $Weight kg")
+								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))","serviceaccessgui"   )  
+								}
+								else
+								 {CommUtils.outgreen("$name refusing ticket n.${payloadArg(0)}")
+								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))","serviceaccessgui"   )  
+								 }
+						}
+						 requestsList.remove(Request)  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
