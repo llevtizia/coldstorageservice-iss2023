@@ -21,16 +21,19 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
-		
-				var MAXW = 1000 		
-				var TICKETTIME = 30
-				var Temp_load = 0f
-				var TicketNumber = 1
+		 
+				val list = mutableListOf<Triple<Int, Float, Long>>() 
 				
-				var requestsList = mutableListOf<Request?>()	
+				var MAXW = 200	
+				var TICKETTIME = 15
+				var CurrentLoad = 0f
+				var TicketNumber = 1	
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
+						delay(1000) 
+						observeResource("localhost","8015","ctxcoldstorageservice","trolley","statustrolley")
+						CommUtils.outred("$name OBSERVING RESOURCE statustrolley FROM trolley")
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
 						 	   
 						CommUtils.outgreen("$name START ")
@@ -49,31 +52,34 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t04",targetState="handlestore",cond=whenRequest("storerequest"))
-					transition(edgeName="t05",targetState="handleticket",cond=whenRequest("ticketrequest"))
+					 transition(edgeName="t00",targetState="handlestore",cond=whenRequest("storerequest"))
+					transition(edgeName="t01",targetState="handleticket",cond=whenRequest("ticketrequest"))
+					transition(edgeName="t02",targetState="handletrolley",cond=whenDispatch("statustrolley"))
 				}	 
 				state("handlestore") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
-												var Load = payloadArg(0).toFloat() 
-												var FreeSpace = MAXW - Temp_load 
-								if(  Load <= FreeSpace  
-								 ){ 
-													val Ticket = TicketNumber
-													TicketNumber = TicketNumber + 1
-								CommUtils.outgreen("$name accepting load of ${payloadArg(0)} kg ")
+												var LoadToStore = payloadArg(0).toFloat() 
+												var FreeSpace = MAXW - CurrentLoad 
+								CommUtils.outgreen("$name received request to store $LoadToStore kg")
+								if(  LoadToStore <= FreeSpace  
+								 ){CommUtils.outgreen("$name accepting load of $LoadToStore kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
-								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber)","serviceaccessgui"   )  
-								 
-													var StartTime = System.currentTimeMillis())
-													requestsList.add( Request(Ticket, Load, StartTime ) 
+								
+													list.add( Triple( TicketNumber, LoadToStore, System.currentTimeMillis() ) )
+													CurrentLoad = CurrentLoad + LoadToStore
+								CommUtils.outblack("Current load in the cold room: $CurrentLoad ")
+								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)"   )  
+								 TicketNumber = TicketNumber + 1  
 								}
 								else
-								 {CommUtils.outgreen("$name refusing load of ${payloadArg(0)} kg")
-								 answer("storerequest", "storerefused", "storerefused(payloadArg(0))","serviceaccessgui"   )  
+								 {CommUtils.outgreen("$name refusing load of $LoadToStore kg")
+								 answer("storerequest", "storerefused", "storerefused($LoadToStore)"   )  
 								 }
+								
+								        		println(list)      		
 						}
 						//genTimer( actor, state )
 					}
@@ -84,29 +90,72 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				}	 
 				state("handleticket") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(TICKET)"), 
+						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
+								 var Ticket = payloadArg(0).toInt()  
+								CommUtils.outgreen("$name received ticket n. $Ticket")
 								 
-												var TicketNumber = payloadArg(0).toInt() 
-												var Request = requestsList.find { it.ticketNumber == TicketNumber }
-												var TimeInterval = ( System.currentTimeMillis() - Request?.timestamp ) / 1000 
-												var Weight = Request?.Weight
-								if(  TimeInterval < TICKETTIME  
-								 ){CommUtils.outgreen("$name accepting ticket n.$TicketNumber - weight: $Weight kg")
-								answer("ticketrequest", "chargetaken", "chargetaken(payloadArg(0))","serviceaccessgui"   )  
+											 	val request = list.find { it.first == Ticket }
+												var ElapsedTime = ( System.currentTimeMillis() - request!!.third )
+												var Load = request.second
+								if(  ( ElapsedTime/1000 ) < TICKETTIME  
+								 ){CommUtils.outgreen("$name accepting ticket n. $Ticket ($Load kg)")
+								CommUtils.outgreen("$name sending request to trolley...")
+								forward("gotakecharge", "gotakecharge($Ticket,$Load)" ,"trolley" ) 
 								}
 								else
-								 {CommUtils.outgreen("$name refusing ticket n.${payloadArg(0)}")
-								 answer("ticketrequest", "chargerefused", "chargerefused(payloadArg(0))","serviceaccessgui"   )  
+								 {CommUtils.outgreen("$name refusing ticket n. $Ticket ($Load kg) - EXPIRED ")
+								 answer("ticketrequest", "ticketrefused", "ticketrefused($TicketNumber)"   )  
+								  
+								 					CurrentLoad = CurrentLoad - Load
+								 					list.remove(request)
+								         			println(list) 
 								 }
 						}
-						 requestsList.remove(Request)  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
 					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handletrolley") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("statustrolley(X,Y)"), Term.createTerm("statustrolley(X,Y)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 
+												var Ticket = payloadArg(0)
+												var Status = payloadArg(1)
+								if(  Status == "init"  
+								 ){CommUtils.outblack("$name - received the update of $Status  ")
+								}
+								if(  Status == "takeload"  
+								 ){CommUtils.outblack("$name - trolley is in status: $Status for ticket $Ticket ")
+								CommUtils.outblack("$name - sending CHARGE TAKEN...")
+								answer("ticketrequest", "chargetaken", "chargetaken($Ticket)"   )  
+								 
+													val request = list.find { it.first == Ticket.toInt() }
+													list.remove(request)
+								        			println(list) 
+								}
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("endwork") { //this:State
+					action { //it:State
+						CommUtils.outblack("$name END WORK.")
+						delay(1000) 
+						 System.exit(0)  
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
 				}	 
 			}
 		}

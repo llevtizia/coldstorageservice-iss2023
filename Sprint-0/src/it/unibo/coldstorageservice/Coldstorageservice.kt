@@ -60,12 +60,12 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								if(  LoadToStore <= FreeSpace  
 								 ){CommUtils.outgreen("$name accepting load of $LoadToStore kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
-								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)"   )  
+								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)","serviceaccessgui"   )  
 								 TicketNumber = TicketNumber + 1  
 								}
 								else
 								 {CommUtils.outgreen("$name refusing load of $LoadToStore kg")
-								 answer("storerequest", "storerefused", "storerefused($LoadToStore)"   )  
+								 answer("storerequest", "storerefused", "storerefused($LoadToStore)","serviceaccessgui"   )  
 								 }
 						}
 						//genTimer( actor, state )
@@ -84,13 +84,12 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 												var Ticket = payloadArg(0).toInt()
 								if(  Time < TICKETTIME  
 								 ){CommUtils.outgreen("$name accepting ticket n. $Ticket ")
-								answer("ticketrequest", "ticketaccepted", "ticketaccepted($Ticket)"   )  
+								answer("ticketrequest", "chargetaken", "chargetaken($Ticket)","serviceaccessgui"   )  
 								CommUtils.outgreen("$name sending request to trolley...")
-								forward("gotakecharge", "gotakecharge($Ticket)" ,"trolley" ) 
 								}
 								else
 								 {CommUtils.outgreen("$name refusing ticket n. $Ticket - EXPIRED ")
-								 answer("ticketrequest", "ticketrefused", "ticketrefused($TicketNumber)"   )  
+								 answer("ticketrequest", "ticketrefused", "ticketrefused($TicketNumber)","serviceaccessgui"   )  
 								 }
 						}
 						//genTimer( actor, state )

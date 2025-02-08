@@ -46,7 +46,8 @@
             </tr>
             <tr>
                 <td class="key">Cold Room</td>
-                <td>container di deposito del carico, con capacità massima di <b>MAXW</b> kg</td>
+                <td>container di deposito del carico, con capacità massima di <b>MAXW</b> kg e una <b>PORT</b>
+                di accesso</td>
             </tr>
             <tr>
                 <td class="key">Transport trolley</td>
@@ -107,7 +108,6 @@
                         <p>
                             <img src="html/_images/basicrobot24.png" alt="basic robot arch" class="horizontal_image">
                         </p>
-                        
                     </li>
                 </ul>
             </p>
@@ -127,7 +127,12 @@
                         come posizioni sulla mappa
                     </li>
                 </ul>
-                <br><img src="html/_images/tf23/room_map.png" alt="service area map" class="center"><br>
+                <br>
+                <p>
+                    <img src="html/_images/tf23/room_map.png" alt="service area map" class="center">
+                </p>
+                <br>
+                
             </p>
             
             
@@ -150,13 +155,7 @@
                     <li><b>1</b>: cella libera</li>
                 </ul>
             </p>
-            <P>
-                Il <a href="html/BasicRobot24.html">BasicRobot24</a> introduce il concetto di mossa elementare 
-                del robot: &ensp; <code>Request step:step(T)</code> 
-                <ul>
-                    <li>sposta il robot (con velocità prefissata) di una distanza <b>RD</b> in un tempo <b>T</b></li>
-                </ul>
-            </P>
+            
 
             <p>
                 La <ks>Service Access GUI</ks> è l'interfaccia che consente l'interazione dell'utente con il sistema per:
@@ -176,7 +175,8 @@
                 la visualizzazione di informazioni sul sistema.
 
                 <br><br>
-                Entrambe le interfacce possono essere inizialmente modellate anch'esse come attori.
+                Entrambe le interfacce possono essere inizialmente modellate anch'esse come attori grazie all'uso 
+                del <k>metamodello QActor</k>.
             </p>
 
             <br>
@@ -202,8 +202,8 @@
                         la richiesta sarà rifiutata.
                     </li>
                     <li>
-                        Una volta accettata la richiesta, il <i>ColdStorageService</i> risponde con un messaggio <b>charge taken</b> e l'utente
-                        lascia la <k>INDOOR port</k>.
+                        Una volta accettata la richiesta, il <i>ColdStorageService</i> risponde con un messaggio <b>charge taken</b>. Una 
+                        volta ricevuto, l'utente lascia la <k>INDOOR port</k>.
                     </li>                    
                     <li>
                         Quando il <i>ColdStorageService</i> accetta una richiesta, viene inviato un messaggio al <i>trolley</i>, che deve raggiungere
@@ -214,7 +214,9 @@
                         Quando finisce un'azione di deposito, il trolley può accettare un'altra richiesta - se presente - o tornare in <k>HOME</k>.
                     </li>
                     <li>
-                        Mentre il <i>trolley</i> è in movimento, i requisiti di allarme devono essere rispettati. 
+                        Mentre il <i>trolley</i> è in movimento, i requisiti di allarme devono essere rispettati. Il trolley 
+                        non si fermerà solo nel caso in cui un prefissato intervallo di <b>MINT</b> secondi non sia passato 
+                        dallo stop precedente.
                     </li>
                     <li>
                         La <i>Service Status GUI</i> può consentire di monitorare lo <b>stato corrente</b> del trolley, il <b>peso</b> del carico
@@ -232,7 +234,6 @@
         <h2>Problem analysis</h2>
         <div class="remark">
             <p>
-            
                 Per realizzare un primo modello del sistema sulla base delle analisi, si sceglie di utilizzare il linguaggio di modellazione 
                 <a href="./html/QakActors24.html">Qak</a> fornito dal committente. Il metamodello 
                 <ul>
@@ -246,25 +247,92 @@
                 <p>
                     L'architettura del sistema è la seguente:
                     <br><br>
-                    <img src="../coldstorageservicearch.png" alt="basic robot arch" class="medium_image">
+                    <img src="../coldstorageservicearch.png" alt="service arch" class="medium_image">
                 </p>
                 
                 <p>
                     Il sistema &eacute costituito da due <b>contesti</b>:
                     <ul>
                         <li>
-                            <b>ctxbasicrobot</b> per il <ks>basicrobot</ks> fornito dal committente
+                            <b>ctxbasicrobot</b> per il <ks>basicrobot</ks> fornito dal committente (attore esterno)
                         </li>
                         <li>
                             <b>ctxcoldstorageservice</b> per <ks>serviceaccessgui</ks>, <ks>coldstorageservice</ks> e <ks>trolley</ks>
                         </li>
                     </ul>
 
+                    <br>Qui è possibile visualizzare il modello definito: 
+                    <a href="sprint-0/coldstorageservice.qaktt">link modello</a>
+                </p>
+
                     <br>
-                    <h4><ks><a href="./sprint-0/serviceaccessgui.qaktt">SERVICE ACCESS GUI</a></ks></h4>
+
+                    <!-- GUI -->
+                    <h4 id="serviceaccessgui"><ks>SERVICE ACCESS GUI</ks></h4>
+                    <pre>
+                        QActor serviceaccessgui context ctxcoldstorageservice {
+
+                            State s0 initial {
+                                printCurrentMessage
+                                println("$name START ") color blue
+                            }
+                            Goto sendstore 
+                            
+                            State sendstore {
+                                [# var CurrentWeight = ( Math.round( Math.random() * 100 ) )  #]
+                                println("$name SEND REQUEST kg $CurrentWeight") color blue
+                                request coldstorageservice -m storerequest : storerequest($CurrentWeight)
+                            }
+                            Transition t0 whenReply storeaccepted -> sendticket
+                                        whenReply storerefused -> endwork
+                                        
+                            State sendticket {
+                                
+                                delay 1000
+                                onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
+                                    
+                                    [# 
+                                        var TicketNumber = payloadArg(0)
+                                        var Load = payloadArg(1)
+                                    #]
+                                    
+                                    println("$name MOVING TO INDOOR -> ticket: $TicketNumber, $Load kg ") color blue
+                                    
+                                    delay 2000
+                                    
+                                    println("$name SENDING TICKET: $TicketNumber") color blue
+                                    request coldstorageservice -m ticketrequest : ticketrequest($TicketNumber)
+                                }
+                            }
+                            Transition t0 whenReply chargetaken -> endwork
+                                        whenReply ticketrefused -> endwork
+                                        
+                            State endwork {
+                                onMsg( storerefused : storerefused( X ) ) {
+                                    [# var Load = payloadArg(0) #]
+                                    println("$name - request of $Load kg refused. Not enough free space...") color blue
+                                }
+                                
+                                onMsg( ticketrefused : ticketrefused( X ) ) {
+                                    
+                                    [# var TicketNumber = payloadArg(0) #]
+                                    println("$name - request n. $TicketNumber refused. Too much time has passed...") color blue
+                                }
+                                
+                                onMsg( chargetaken : chargetaken( X ) ) {
+                                    
+                                    [# var TicketNumber = payloadArg(0) #]
+                                    println("$name - request n. $TicketNumber accepted. All requests sent!") color blue
+                                }
+                            }
+                        }
+                    </pre>
+                    
+
                     <ul>
                         <li>
-                            La <ks>serviceaccessgui</ks> è modellata come un QActor che simula le interazioni dell'utente con il sistema
+                            La <ks>serviceaccessgui</ks> è modellata come un QActor che simula le interazioni dell'utente con il 
+                            sistema
                         </li>
                         <li>
                             <em>sendstore</em>: invia la richiesta di <i>storerequest</i> al <ks>coldstorageservice</ks> e attende una
@@ -276,12 +344,86 @@
                         </li>
                         <li>
                             <em>sendticket</em>: si simula lo spostamento dell'utente all'<k>INDOOR</k> e l'invio del numero del ticket al
-                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>ticketaccepted</i>, <i>ticketrefused</i>
+                            <ks>coldstorageservice</ks>, che può accettare o meno il carico: <i>chargetaken</i>, <i>ticketrefused</i>
 
                         </li>
                     </ul>
 
-                    <h4><ks><a href="./sprint-0/coldstorageservice.qaktt">COLD STORAGE SERVICE</a></ks></h4>
+                    <!-- COLD STORAGE SERVICE -->
+                    <h4><ks>COLD STORAGE SERVICE</ks></h4>
+                    
+                    <pre>
+                        QActor coldstorageservice context ctxcoldstorageservice {
+
+                            // model the cold room
+                            [#
+                                var MAXW = 200		
+                                var TICKETTIME = 15
+                                var Current_load = 0f
+                                var TicketNumber = 1	
+                            #]
+                            
+                            State s0 initial {
+                                printCurrentMessage
+                                println("$name START ") color green
+                            }
+                            Goto waitrequest
+                            
+                            State waitrequest {
+                                println("$name waiting for requests... ") color green
+                            }
+                            Transition t0 whenRequest storerequest -> handlestore
+                                        whenRequest ticketrequest -> handleticket
+                                                
+                            State handlestore {
+                                onMsg( storerequest : storerequest( KG ) ) {
+                                    [# 
+                                        var LoadToStore = payloadArg(0).toFloat() 
+                                        var FreeSpace = MAXW - Current_load 
+                                    #] 
+                                    if [# LoadToStore <= FreeSpace #] {
+                                        
+                                        println("$name accepting load of $LoadToStore kg ") color green
+                                        println("$name generating ticket n. $TicketNumber") color green
+                                        replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber, $LoadToStore  ) caller== serviceaccessgui
+                                                                                    
+                                        [# TicketNumber = TicketNumber + 1 #]
+                                    }
+                                    
+                                    else {
+                                        println("$name refusing load of $LoadToStore kg") color green
+                                        replyTo storerequest with storerefused : storerefused( $LoadToStore ) caller== serviceaccessgui
+                                    }
+                                }
+                            }
+                            Goto waitrequest
+                            
+                            State handleticket {
+                                onMsg( ticketrequest : ticketrequest( TICKET ) ) {
+                                    // need to check the time
+                                    [# 
+                                        var Time = 10  
+                                        var Ticket = payloadArg(0).toInt()
+                                    #] // System.currentTimeMillis() - time of the ticket
+                                    
+                                    if [# Time < TICKETTIME #] {
+                                        println("$name accepting ticket n. $Ticket ") color green
+                                        replyTo ticketrequest with chargetaken : chargetaken( $Ticket ) caller== serviceaccessgui 
+                                                                                    
+                                        println("$name sending request to trolley...") color green
+                                    }
+                                    
+                                    else {
+                                        println("$name refusing ticket n. $Ticket - EXPIRED ") color green
+                                        
+                                        replyTo ticketrequest with ticketrefused : ticketrefused( $TicketNumber ) caller== serviceaccessgui
+                                    }
+                                }
+                            }
+                            Goto waitrequest
+                        }
+                    </pre>
+                    
                     <ul>
                         <li>
                             Il <ks>coldstorageservice</ks> definisce le variabili di sistema:
@@ -298,7 +440,7 @@
                         <li>
                             <em>handlestore</em>: si verifica che nella <k>coldroom</k> ci sia abbastanza spazio per il carico:
                             <ul>
-                                <li><i>storeaccepted</i>: la richiesta viene accettata e viene generato il ticket</li>
+                                <li><i>storeaccepted</i>: la richiesta viene accettata e viene inviato il ticket all'utente</li>
                                 <li><i>storerefused</i>: la richiesta viene rifiutata</li>
                             </ul>
                         </li>
@@ -306,7 +448,7 @@
                             <em>handleticket</em>: si calcola il tempo trascorso dall'emissione del ticket:
                             <ul>
                                 <li>
-                                    <i>ticketaccepted</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
+                                    <i>chargetaken</i>: il tempo trascorso è minore di <k>TICKETTIME</k> e la richiesta
                                     è accettata
                                 </li>
                                 <li><i>ticketrefused</i>: il tempo trascorso è maggiore e la richiesta non è più valida</li>
@@ -314,44 +456,221 @@
                         </li>
                     </ul>
 
-                    <h4><ks><a href="./sprint-0/trolley.qaktt">TROLLEY</a></ks></h4>
+                    <!-- TROLLEY -->
+                    <h4><ks>TROLLEY</ks></h4>
+                    <pre>
+                        QActor trolley context ctxcoldstorageservice {
+	
+                            State s0 initial {
+                                printCurrentMessage
+                                println("$name START ") color magenta
+                                println("$name engage BASIC ROBOT ") color magenta
+                                request basicrobot -m engage: engage(trolley, 150)
+                            }
+                            Transition t0 whenReply engagedone -> waitrequest
+                            
+                            State waitrequest {
+                                println("$name waiting for requests...") color magenta
+                                
+                                //ricezione messaggio da parte del service (non indicato dai requisiti) -> simulato delay
+                                delay 500
+                            }  
+                            Goto gotoindoor
+                            
+                            State gotoindoor {  
+                                println("$name moving to INDOOR") color magenta
+                                delay 500 // simulate the movement
+                            }
+                            Goto takeload
+                            
+                            State takeload {
+                                println("$name taking the load...") color magenta
+                                delay 500
+                                // charge taken?
+                            } 
+                            Goto gotocoldroom
+                            
+                            State gotocoldroom {
+                                println("$name moving to COLDROOM") color magenta
+                                delay 500 
+                            }
+                            Goto storeload
+                            
+                            State storeload {
+                                println("$name storing the load...") color magenta
+                                
+                                delay 2000
+                                // waits for requests
+                            }
+                            Transition t0 whenTime 2000 -> gohome
+                                             //whenMsg gotakecharge -> gotoindoor
+                        
+                              
+                            // go home 
+                            State gohome{
+                                println("$name going HOME...") color magenta
+                                delay 2000 // simulate the movement
+                            }
+                            Goto trolleyathome
+                            
+                            // at home  
+                            State trolleyathome {
+                                
+                                println("$name trolley at home") color magenta
+                                forward basicrobot -m disengage : disengage(trolley)
+                                
+                                println("$name  disengaged") color magenta
+                                delay 1000 //avoid to premature abort of connection
+                                [# System.exit(0) #]
+                            }
+                             
+                            //failed
+                            State failed {
+                                println("$name moverobot to indoor failed") color magenta
+                            }
+                        }
+                    </pre>
                     <ul>
                         <li>
                             <em>s0</em>: il <ks>trolley</ks> invia la richiesta di <i>engage</i> al <ks>basicrobot</ks> e attende l'esito
                             positivo dell'operazione per passare allo stato <em>waitrequest</em>
                         </li>
-                        <li><em>waitrequest</em>: attende la ricezione di una richiesta <i>gotakecharge</i> per iniziare il movimento 
-                             e andare verso la INDOOR port</li>
                         <li>
-                            <em>gotoindoor</em>: il robot si sposta in posizione <b>(0, 4)</b>
+                            <em>waitrequest</em>: attende la ricezione di una richiesta da parte del servizio. Dato che l'interazione tra trolley 
+                            e servizio non è direttamente ricavabile dai requisiti, al momento questa viene simulata con un <i>delay</i> per poi 
+                            passare allo stato successivo
+                        <li>
+                            <em>gotoindoor</em>: simulazione dello spostamento del robot verso la <k>INDOOR</k> port
                         </li>
                         <li>
-                            <em>takeload</em>: simula il caricamento del robot. Al termine, il robot dovrà inviare il messaggio di 
-                            <i>chargetaken</i> 
+                            <em>takeload</em>: simula il caricamento del robot
                         </li>
-                        <li><em>gotocoldroom</em>: il robot si sposta dalla <k>INDOOR</k> in posizione <b>(0, 4)</b> alla 
-                            <k>coldroom</k> in posizione <b>(4, 3)</b></li>
-                        <li><em>storeload</em>: il robot scarica il carico nella <k>coldroom</k>. Se non arrivano altre richieste torna in <k>HOME</k></li>
-                        <li><em>gohome</em>: il robot ritorna in <k>HOME</k>, in posizione <b>(0, 0)</b></li>
+                        <li>
+                            <em>gotocoldroom</em>: simula il movimento del robot dalla <k>INDOOR</k> port alla porta della <k>coldroom</k>
+                        </li>
+                        <li>
+                            <em>storeload</em>: il robot scarica il carico nella <k>coldroom</k>. 
+                            Dopo due secondi passa nello stato successivo
+                        </li>
+                        <li>
+                            <em>gohome</em>: il robot ritorna in <k>HOME</k>, in posizione <b>(0, 0)</b>
+                        </li>
                         <li>
                             <em>trolleyathome</em>: stato finale in cui viene inviata la richiesta di <i>disengage</i> al <ks>basicrobot</ks>
                         </li>
-                    </ul>
-
-                </p>
-
-
-
-
-              
+                    </ul>                       
             </p>
-
-            
-            
-            
         </div>
 
-        <h2>Test plans</h2> 
+        <h2>Test plans</h2>
+        <div class="remark">
+            <p>
+                Per testare la corretta gestione delle richieste inviate al sistema, è stata realizzata una variante del modello 
+                in cui i messaggi non vengono inviati dalla <ks>serviceaccessgui</ks>, usando invece una specifica test class.
+            </p>
+            
+            <ul>
+                <li>
+                    <a href="sprint-0/sprint-0-test.qaktt">Link modello <ks>coldstorageservice</ks> per test</a>
+                </li>
+                <li>
+                    <a href="sprint-0/ColdStorageServiceTest.java">Link test unit</a>
+                </li>
+            </ul>
+            
+            <p>
+                <h4><ks>storeRequestTest()</ks></h4>
+                <pre>
+                    public class ColdStorageServiceTest {
+	
+                        public static final String ADDR		= "localhost";
+                        public static final int PORT		= 8015;
+                        public static final String MSG		= "msg( storerequest, request, serviceaccesgui, coldstorageservice, storerequest(5), 5 )";
+                        public static final String REPLY	= "storeaccepted";
+
+                        @Test
+                        public void storeRequestTest() {
+            
+            
+                        try (
+                                Socket client = new Socket(ADDR, PORT);
+                                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                                BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                            
+                        ){
+
+                            // send store request
+                            out.write(MSG);
+                            out.newLine(); // ensure the message ends properly
+                            out.flush();
+                            
+                            //wait for response
+                            String response = in.readLine();
+                            assertNotNull("The response is null", response);
+                            assertTrue("The response doesn't contain 'storeaccepted'", response.contains(REPLY) );
+                                    
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }	
+                        }
+                    }
+                </pre>
+
+                Test sul funzionamento del sistema: viene inviata la richiesta di depositare un numero di KG inferiore a 
+                <b>MAXW</b> e si verifica che la richiesta venga accettata.
+
+                <br>
+                <h4><ks>handleTicketTest()</ks></h4>
+                <pre>
+                    @Test
+                    public void handleTicketTest() {
+                        
+                        
+                        try (
+                            Socket client = new Socket(ADDR, PORT);
+                            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                        ) {
+                            // send store request
+                            out.write(MSG);
+                            out.newLine();
+                            out.flush();
+
+                            // wait for response
+                            String response = in.readLine();
+                            assertNotNull("The response is null ", response);
+                            assertTrue("The response doesn't contain 'storeaccepted' ", response.contains(REPLY));
+
+                            // extract ticket number 
+                            String ticketNumber = response.replaceAll("[^0-9]", ""); // extract all digits
+                            ticketNumber = ticketNumber.replaceFirst("(\\d+).*", "$1"); // keep only the first number
+
+                            // Wait before sending the second request
+                            Thread.sleep(1000); // Or use TimeUnit.MILLISECONDS.sleep(1000);
+
+                            // Send second request using the ticket
+                            String ticketRequest = "msg( ticketrequest, request, serviceaccesgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
+                            out.write(ticketRequest);
+                            out.newLine();
+                            out.flush();
+
+                            // Wait for response
+                            String ticketResponse = in.readLine();
+                            assertNotNull("The response to the ticket is null ", ticketResponse);
+                            assertTrue("The ticket is expired... ", ticketResponse.contains("chargetaken"));
+
+                        } catch (IOException | InterruptedException e) {
+                            e.printStackTrace();
+                            fail("Exception thrown during test execution: " + e.getMessage());
+                        }
+                    }
+                </pre>
+
+                Test sulla gestione della seconda richiesta: dopo aver ricevuto il ticket, viene inviata una 
+                seconda richiesta al sistema prima dello scadere del <b>TICKETTIME</b> e il ticket risulta valido.
+            </p>
+        </div> 
 
 
         <h2>Project</h2>
@@ -360,7 +679,11 @@
             <br>
             <table>
                 <tr>
-                    <td><b>SPRINT1</b></td>
+                    <td><b>
+                        <a href="../../Sprint-1/userDocs/ManciniLetizia_coldstorageservice.html">
+                            SPRINT1
+                        </a>
+                    </b></td>
                     <td>
                         <ul>
                             <li>
@@ -390,14 +713,6 @@
                 </tr>
             </table>
         </div> 
-
-        <h2>Testing</h2> 
-        
-
-        <h2>Deployment</h2> 
-
-        
-        <h2>Maintenance</h2> 
         
         <!-- USEFUL
         <table style="width:100%" border="1">
@@ -425,6 +740,7 @@
 
         <img src="html/_images/picture.jpg" alt="picture" width="15%" height="15%" margin-left="2%">
 
-        </div> 
+        </div>
+        
     </body>
 </html>

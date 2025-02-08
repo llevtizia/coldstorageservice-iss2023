@@ -1,0 +1,404 @@
+System coldstorageservice
+
+// Messaggi per le interazioni del robot ----------------------------------------
+Request engage        : engage(OWNER, STEPTIME)	
+Reply   engagedone    : engagedone(ARG)    for engage
+Reply   engagerefused : engagerefused(ARG) for engage
+
+Dispatch disengage    : disengage(ARG) 
+ 
+//robotpos
+Request moverobot    :  moverobot(TARGETX, TARGETY)  
+Reply moverobotdone  :  moverobotok(ARG)                    for moverobot
+Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
+
+Dispatch setrobotstate	: setpos(X,Y,D) 
+Dispatch setdirection : dir( D )  //D =up|down!left|right
+
+// ------------------------------------------------------------------------------
+
+// Messaggi dell'applicazione ---------------------------------------------------
+Request storerequest  : storerequest( KG ) 			"richiesta deposito KG"
+Reply storeaccepted   : storeaccepted( TICKET, KG ) for storerequest  	
+Reply storerefused    : storerefused( X )  			for storerequest	
+
+Request ticketrequest : ticketrequest( TICKET ) 	"richiesta invio ticket"
+Reply chargetaken	  : chargetaken( TICKET ) 		for ticketrequest	
+Reply ticketrefused   : ticketrefused( TICKET ) 	for ticketrequest 	
+
+Dispatch gotakecharge	: gotakecharge( X, Y )
+Dispatch statustrolley  : statustrolley( X, Y )
+//-------------------------------------------------------------------------------
+
+Context ctxcoldstorageservice ip [host="localhost" port=8015] 
+Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
+
+ExternalQActor basicrobot context ctxbasicrobot
+  
+  
+// 1 - service access gui
+QActor serviceaccessgui context ctxcoldstorageservice {
+	
+	[# var Counter = 1 #]	
+	
+	
+	State s0 initial {
+		delay 1500  // Allow time for other actors to initialize
+		printCurrentMessage
+		println("$name START ") color blue
+	}
+	Goto sendstore
+	
+	// multiple request
+	/*
+	 
+	State sendstore {
+		if [# Counter <= 4 #] {
+			
+			[# var CurrentWeight = ( Math.round( Math.random() * 100 ) ) #]
+			
+			println("$name SEND REQUEST n. $Counter, kg $CurrentWeight") color blue
+			request coldstorageservice -m storerequest : storerequest($CurrentWeight)
+			
+			[# Counter = Counter + 1 #]
+			
+		} else {
+			println("$name BYE  ") color blue
+			[# System.exit(0) #]
+		}
+	}
+	Transition t0 whenReply storeaccepted -> sendticket
+				whenReply storerefused -> endwork
+					
+	// receiveanswer
+	State sendticket {
+		
+		delay 1000
+		onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
+			
+			[# 
+				var TicketNumber = payloadArg(0)
+				var Load = payloadArg(1)
+			#]
+			
+			println("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
+			
+			delay 2000
+			
+			println("$name SENDING TICKET: $TicketNumber") color blue
+			
+			request coldstorageservice -m ticketrequest : ticketrequest($TicketNumber)
+			
+		}
+	}
+	Transition t0 whenReply chargetaken and [# Counter <= 4 #] -> sendstore	
+					whenReply chargetaken and [# Counter > 4 #] -> endwork	
+					whenReply ticketrefused -> endwork
+	//Goto sendrequest if [# Counter <= 4 #] else endwork
+	* 
+	*/
+	 
+	// single request
+	State sendstore {
+		[# var CurrentWeight = ( Math.round( Math.random() * 100 ) )  #]
+		println("$name SEND REQUEST kg $CurrentWeight") color blue
+		request coldstorageservice -m storerequest : storerequest($CurrentWeight)
+	}
+	Transition t0 whenReply storeaccepted -> sendticket
+				whenReply storerefused -> endwork
+				
+	// send the second request to the service	
+	State sendticket {
+		
+		delay 1000
+		onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
+			
+			[# 
+				var TicketNumber = payloadArg(0)
+				var Load = payloadArg(1)
+			#]
+			
+			println("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
+			
+			delay 2000
+			
+			println("$name SENDING TICKET: $TicketNumber") color blue
+			request coldstorageservice -m ticketrequest : ticketrequest($TicketNumber)
+		}
+	}
+	Transition t0 whenReply chargetaken -> endwork
+				whenReply ticketrefused -> endwork
+	
+	//endwork
+	State endwork{
+		
+		onMsg( storerefused : storerefused( X ) ) {
+			
+			[# var Load = payloadArg(0) #]
+			println("$name - request of $Load kg refused. Not enough free space...") color blue
+		}
+		
+		onMsg( ticketrefused : ticketrefused( X ) ) {
+			
+			[# var TicketNumber = payloadArg(0) #]
+			println("$name - request n. $TicketNumber refused. Too much time has passed...") color blue
+		}
+		
+		onMsg( chargetaken : chargetaken( X ) ) {
+			
+			[# var TicketNumber = payloadArg(0) #]
+			println("$name - request n. $TicketNumber accepted and stored. All requests sent!") color blue
+		}
+		
+		println("$name BYE  ") color blue
+	}
+} 
+
+
+ 
+// 2 - coldstorageservice
+QActor coldstorageservice context ctxcoldstorageservice {
+	
+	
+	[# 
+		val list = mutableListOf<Triple<Int, Float, Long>>() 
+		
+		var MAXW = 200	
+		var TICKETTIME = 15
+		var CurrentLoad = 0f
+		var TicketNumber = 1	
+	#] 
+  
+	State s0 initial {
+		delay 1000  // Allow time for other actors to initialize
+		observeResource trolley msgid statustrolley
+		println("$name OBSERVING RESOURCE statustrolley FROM trolley") color red
+		
+		printCurrentMessage
+		println("$name START ") color green
+	}
+	Goto waitrequest 
+	  
+	// wait request
+	State waitrequest {
+		println("$name waiting for requests... ") color green
+	}
+	Transition t0 whenRequest storerequest -> handlestore
+					whenRequest ticketrequest -> handleticket
+					whenMsg statustrolley -> handletrolley
+					
+				 
+	// handle the first request			
+	State handlestore {
+		onMsg( storerequest : storerequest( KG ) ) {
+			
+			[# 
+				var LoadToStore = payloadArg(0).toFloat() 
+				var FreeSpace = MAXW - CurrentLoad 
+			#]
+			println("$name received request to store $LoadToStore kg") color green
+			
+			if [# LoadToStore <= FreeSpace #] {
+				
+				println("$name accepting load of $LoadToStore kg ") color green
+				println("$name generating ticket n. $TicketNumber") color green
+				[#
+					list.add( Triple( TicketNumber, LoadToStore, System.currentTimeMillis() ) )
+					CurrentLoad = CurrentLoad + LoadToStore
+				#]
+				println("Current load in the cold room: $CurrentLoad ")
+				
+				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber, $LoadToStore )
+				[# TicketNumber = TicketNumber + 1 #]
+			} else {
+				println("$name refusing load of $LoadToStore kg") color green
+				replyTo storerequest with storerefused : storerefused( $LoadToStore  )
+			}
+			
+			[#
+        		println(list)      		
+			#]
+		}  
+	}
+	Goto waitrequest 
+	
+	// handle the second request
+	State handleticket {
+		onMsg( ticketrequest : ticketrequest( X ) ) {
+			
+			[# var Ticket = payloadArg(0).toInt() #]
+			println("$name received ticket n. $Ticket") color green
+			
+			[# 
+			 	val request = list.find { it.first == Ticket }
+				var ElapsedTime = ( System.currentTimeMillis() - request!!.third )
+				var Load = request.second
+			#]
+			
+			if [# ( ElapsedTime/1000 ) < TICKETTIME #] {
+				
+				println("$name accepting ticket n. $Ticket ($Load kg)") color green
+				println("$name sending request to trolley...") color green
+				
+				forward trolley -m gotakecharge : gotakecharge( $Ticket, $Load )
+				//replyTo ticketrequest with chargetaken : chargetaken( $TicketNumber )
+				
+				
+			} else {
+				println("$name refusing ticket n. $Ticket ($Load kg) - EXPIRED ") color green
+				
+				replyTo ticketrequest with ticketrefused : ticketrefused( $TicketNumber )
+				[# 
+					CurrentLoad = CurrentLoad - Load
+					list.remove(request)
+        			println(list) 
+				#]
+			}
+			
+			 
+		} 
+	}
+	Goto waitrequest
+	
+	State handletrolley {
+		onMsg( statustrolley  : statustrolley ( X, Y ) ) {
+			[# 
+				var Ticket = payloadArg(0)
+				var Status = payloadArg(1)
+			#]
+			
+			if [# Status == "init" #] {
+				println("$name - received the update of $Status  ")
+			}
+			
+			if [# Status == "takeload" #] {
+				println("$name - trolley is in status: $Status for ticket $Ticket ")
+				println("$name - sending CHARGE TAKEN...")
+				replyTo ticketrequest with chargetaken : chargetaken( $Ticket )
+				
+				[# 
+					val request = list.find { it.first == Ticket.toInt() }
+					list.remove(request)
+        			println(list) 
+				#]
+			}
+		}
+	}
+	Goto waitrequest
+	
+	// timeout?
+	State endwork {
+		println("$name END WORK.")
+		delay 1000 //avoid to premature abort of connection
+		[# System.exit(0) #]
+	}
+}
+ 
+
+// 3 - trolley
+QActor trolley context ctxcoldstorageservice {
+	[#
+		var Status = "init"
+		var Ticket = 0
+		var Load = 0f
+	#]
+	
+	State s0 initial {
+		updateResource [# "statustrolley( $Ticket, $Status )" #]  // Ensure the resource exists
+		println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+		
+		printCurrentMessage
+		println("$name START ") color magenta
+		println("$name engage BASIC ROBOT ") color magenta
+		request basicrobot -m engage: engage(trolley, 150)
+	} 
+	Transition t0 whenReply engagedone -> waitrequest
+	
+	
+	// wait for a request
+	State waitrequest {
+		forward basicrobot -m setrobotstate : setpos(0,0,down)
+		println("$name waiting for requests...") color magenta
+		
+	}  
+	Transition t0 whenMsg gotakecharge -> gotoindoor
+	
+	// go to indoot
+	State gotoindoor { 
+		println("$name moving to INDOOR") color magenta
+		
+		onMsg( gotakecharge : gotakecharge( TICKET, LOAD ) ){
+			
+			[# 
+				Ticket = payloadArg(0).toInt()
+				Load = payloadArg(1).toFloat() 
+			#]		
+			println("$name taking charge - ticket n. $Ticket, $Load kg ") color magenta
+			//replyTo gotakecharge with chargetaken : chargetaken( $Ticket )
+			//updateResource			
+      	}      	
+		delay 500 // simulate the movement
+		request basicrobot -m moverobot : moverobot (0,4) //(0,4) position of INDOOR
+	}
+	Transition t0 whenReply moverobotdone -> takeload
+					whenReply moverobotfailed -> failed
+	
+	// take the load 
+	State takeload {
+		[# Status = "takeload" #]
+		println("$name taking the load...") color magenta
+		
+		//[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+		delay 500
+		updateResource [# "statustrolley( $Ticket, $Status )" #]  
+		println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+	} 
+	Goto gotocoldroom
+	
+	// go to cold room
+	State gotocoldroom {
+		
+		println("$name moving to COLDROOM") color magenta
+		request basicrobot -m moverobot: moverobot(4,3)
+		delay 5000 // simulate the movement
+	}
+	Transition t0 whenReply moverobotdone -> storeload
+			 			whenReply moverobotfailed -> failed
+	
+	// store the load
+	State storeload {
+		
+		println("$name storing the load...") color magenta
+		delay 500
+		// waits for requests
+	} 
+	Transition t0 whenTime 2000 -> gohome
+		 			whenMsg gotakecharge -> gotoindoor
+	 
+	// go home
+	State gohome{
+		
+		println("$name going HOME...") color magenta
+		request basicrobot -m moverobot: moverobot (0 ,0)
+		delay 2000 // simulate the movement 
+	}
+	Transition t0 whenReply moverobotdone -> trolleyathome
+						whenReply moverobotfailed -> failed
+	
+	// at home
+	State trolleyathome {
+		forward basicrobot -m setdirection : dir(down)
+		println("$name trolley at home") color magenta
+		forward basicrobot -m disengage : disengage(trolley)
+		
+		println("$name  disengaged") color magenta
+		delay 1000 //avoid to premature abort of connection
+		[# System.exit(0) #]
+	}
+	 
+	//failed
+	State failed {
+		println("$name action failed") color magenta
+	}
+	Goto gohome
+}

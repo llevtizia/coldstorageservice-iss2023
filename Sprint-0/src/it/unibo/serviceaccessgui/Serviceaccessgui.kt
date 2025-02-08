@@ -56,7 +56,7 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 												var TicketNumber = payloadArg(0)
 												var Load = payloadArg(1)
 								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ")
-								delay(3000) 
+								delay(2000) 
 								CommUtils.outblue("$name SENDING TICKET: $TicketNumber")
 								request("ticketrequest", "ticketrequest($TicketNumber)" ,"coldstorageservice" )  
 						}
@@ -65,7 +65,7 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t02",targetState="endwork",cond=whenReply("ticketaccepted"))
+					 transition(edgeName="t02",targetState="endwork",cond=whenReply("chargetaken"))
 					transition(edgeName="t03",targetState="endwork",cond=whenReply("ticketrefused"))
 				}	 
 				state("endwork") { //this:State
@@ -80,7 +80,7 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 								 var TicketNumber = payloadArg(0)  
 								CommUtils.outblue("$name - request n. $TicketNumber refused. Too much time has passed...")
 						}
-						if( checkMsgContent( Term.createTerm("ticketaccepted(TICKET)"), Term.createTerm("ticketaccepted(X)"), 
+						if( checkMsgContent( Term.createTerm("chargetaken(TICKET)"), Term.createTerm("chargetaken(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 var TicketNumber = payloadArg(0)  
 								CommUtils.outblue("$name - request n. $TicketNumber accepted. All requests sent!")
