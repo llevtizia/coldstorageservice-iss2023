@@ -622,18 +622,146 @@
                     </ul>
                 </p>
                 
-            </p>
-           
-            
+            </p>            
         </div> 
 
-        <h2>Test plans</h2> 
+        <h2>Test plans</h2>
+        <div class="remark">
+            <p>
+                Come nello sprint precedente, per testare la corretta gestione delle richieste inviate al sistema 
+                è stata realizzata una variante del modello in cui i messaggi non vengono inviati dalla <ks>serviceaccessgui</ks>
+                ma usando  una specifica test class.
+            </p>
+            
+            <ul>
+                <li>
+                    <a href="sprint-1/sprint-1-test.qaktt">Link modello <ks>coldstorageservice</ks> per test</a>
+                </li>
+                <li>
+                    <a href="sprint-1/ColdStorageServiceTestSprint1.java">Link test unit</a>
+                </li>
+            </ul>
+
+            <p>
+                <h4><ks>storeRequestTest()</ks></h4>
+                <pre>
+                    public class ColdStorageServiceTestSprint1 {
+	
+                        public static final String ADDR		= "localhost";
+                        public static final int PORT		= 8015;
+                        public static final String MSG		= "msg( storerequest, request, serviceaccesgui, coldstorageservice, storerequest(5), 5 )";
+                        public static final String REPLY	= "storeaccepted";
+                        
+                        @Test
+                        public void storeRequestTest() {
+                            
+                            
+                            try (
+                                    Socket client = new Socket(ADDR, PORT);
+                                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                                
+                            ){
+                    
+                                    // send store request
+                                    out.write(MSG);
+                                    out.newLine(); // ensure the message ends properly
+                                    out.flush();
+                                    
+                                    //wait for response
+                                    String response = in.readLine();
+                                    assertNotNull("The response is null", response);
+                                    assertTrue("The response doesn't contain 'storeaccepted'", response.contains(REPLY) );
+                                            
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }	
+                        }
+                </pre>
+                Test sul funzionamento del sistema: viene inviata la richiesta di depositare un numero di KG inferiore a 
+                <b>MAXW</b> e si verifica che la richiesta venga accettata.
+
+                <br>
+                <h4><ks>handleTicketTest()</ks></h4>
+                <pre>
+                    @Test
+                    public void handleTicketTest() {
+                        
+                        
+                        try (
+                            Socket client = new Socket(ADDR, PORT);
+                            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                        ) {
+                            // send store request
+                            out.write(MSG);
+                            out.newLine();
+                            out.flush();
+
+                            // wait for response
+                            String response = in.readLine();
+                            assertNotNull("The response is null ", response);
+                            assertTrue("The response doesn't contain 'storeaccepted' ", response.contains(REPLY));
+
+                            // extract ticket number 
+                            String ticketNumber = response.replaceAll("[^0-9]+", " ").trim().split(" ")[0]; 
+                            System.out.println("Extracted ticket number: " + ticketNumber);
+
+                            // Wait before sending the second request
+                            Thread.sleep(3000); // Or use TimeUnit.MILLISECONDS.sleep(1000);
+
+                            // Send second request using the ticket
+                            String ticketRequest = "msg( ticketrequest, request, serviceaccesgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
+                            out.write(ticketRequest);
+                            out.newLine();
+                            out.flush();
+
+                            // Wait for response
+                            String ticketResponse = in.readLine();
+                            assertNotNull("The response to the ticket is null ", ticketResponse);
+                            assertTrue("The ticket is expired... ", 
+                                    ticketResponse.contains("chargetaken"));
+
+                        } catch (IOException | InterruptedException e) {
+                            e.printStackTrace();
+                            fail("Exception thrown during test execution: " + e.getMessage());
+                        }
+                    }
+                </pre>
+                Test sulla gestione della seconda richiesta: dopo aver ricevuto il ticket, viene inviata una 
+                seconda richiesta al sistema prima dello scadere del <b>TICKETTIME</b> e il ticket risulta valido.
+            </p>
+        </div>
         
 
-        <h2>Deployment</h2> 
+        <h2>Piano di lavoro</h2> 
+        <div class="remark">
+            <table>
+                <tr>
+                    <td><b>SPRINT2</b></td>
+                    <td>
+                        <ul>
+                            <li>estensione del sistema con introduzione degli alarm requirements</li>
+                            <li>gestione fallimenti del robot</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>SPRINT3</b></td>
+                    <td>
+                        <ul>
+                            <li>realizzazione GUI di sistema</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </div> 
 
         
-        <h2>Maintenance</h2> 
+       
         
         <!-- USEFUL
         <table style="width:100%" border="1">

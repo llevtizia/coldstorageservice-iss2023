@@ -25,7 +25,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				val list = mutableListOf<Triple<Int, Float, Long>>() 
 				
 				var MAXW = 200	
-				var TICKETTIME = 15
+				var TICKETTIME = 30
 				var CurrentLoad = 0f
 				var TicketNumber = 1	
 		return { //this:ActionBasciFsm
@@ -94,8 +94,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 var Ticket = payloadArg(0).toInt()  
 								CommUtils.outgreen("$name received ticket n. $Ticket")
-								 
+								  
 											 	val request = list.find { it.first == Ticket }
+											 	println("Ticket List: $list") 
 												var ElapsedTime = ( System.currentTimeMillis() - request!!.third )
 												var Load = request.second
 								if(  ( ElapsedTime/1000 ) < TICKETTIME  
