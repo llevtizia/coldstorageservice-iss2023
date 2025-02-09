@@ -33,6 +33,32 @@
         <!-- REQUIREMENTS -->
         <h2>Requirements</h2>
         <div class="remark">
+            <p>
+                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#userstories">User stories</a>: 
+                in questo <i>Sprint</i> sarà analizzato il keypoint <em>5</em>, relativo ai 
+                <k><a href="../../Sprint-0/userDocs/html/TemaFinale23.html#alarm-requirements">
+                    requisiti di allarme</a></k> del sistema.
+            </p>
+            <ul>
+                <li>
+                    Il sistema include un <ks>sonar</ks> e un <ks>led</ks> connessi ad un Raspberry Pi
+                </li>
+                <li>
+                    <em>sonar</em>: usato come <highlight><i>alarm device</i></highlight>
+                    <ul>
+                        <li>quando misura una distanza minore di <b>DLIMIT</b>, il trolley si ferma</li>
+                        <li>il trolley riparte quando la distanza misurata aumenta</li>
+                    </ul>
+                </li>
+                <li>
+                    <em>led</em>: usato come <highlight><i>warning device</i></highlight>
+                    <ul>
+                        <li>è <b>spento</b> quando il trolley è in <k>HOME</k></li>
+                        <li><b>lampeggia</b> quando il trolley si muove</li>
+                        <li>è <b>acceso</b> quando il trolley è fermo</li>
+                    </ul>
+                </li>
+            </ul>
             
         </div>
 
