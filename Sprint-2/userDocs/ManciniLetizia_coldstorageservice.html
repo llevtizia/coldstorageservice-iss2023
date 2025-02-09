@@ -1,0 +1,794 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" type="text/css" href="html/_static/pygments.css" />
+    
+    <head>
+        <title>Sprint 2 - Letizia Mancini</title>
+    </head>
+    
+    <body>
+        <div id="top">
+            <h1>LABORATORIO DI INGEGNERIA DEI SISTEMI SOFTWARE <font size="5"></font> </h1>
+        </div>  
+
+        <!-- INTRODUCTION -->
+        <div class="body"> 
+        <h2>Introduction</h2>
+        <div class="slide1">
+            <b>Goal Sprint 2</b>: 
+        </div>
+        <div class="remark">
+            <p>
+                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 0</a>: lo Sprint 0 
+                si è occupato dell'<b>analisi dei requisiti</b> del sistema. Si è concluso con la definizione di una 
+                prima <b>architettura logica</b>:
+            </p>
+            <p>
+                <img src="./../../Sprint-0/coldstorageservicearch.png" alt="basic robot arch" class="medium_image">
+            </p>
+        </div>
+       
+
+        <!-- REQUIREMENTS -->
+        <h2>Requirements</h2>
+        <div class="remark">
+            <p>
+                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#userstories">User stories</a>: 
+                in questo <i>Sprint</i> saranno considerati solamente i keypoints <em>1</em>, <em>2</em>, <em>3</em> 
+                e <em>4</em>, che costituiscono il <k>core applicativo</k> del sistema.
+            </p>
+            <p>
+                Al modello definito nello Sprint 0, lo <b>Sprint 1</b> aggiunge:
+                <ul>
+                    <li>il movimento del trolley</li>
+                    <li>le interazioni tra i componenti</li>
+                </ul> 
+
+                L'interazione con l'utente sarà ancora simulata tramite la 
+                <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#serviceaccessgui">
+                    <ks>GUI</ks>
+                </a> realizzata nello Sprint precedente.
+            </p>
+        </div>
+
+
+        <!-- REQUIREMENTS ANALYSIS -->
+        <h2>Requirement analysis</h2>
+        <div class="remark">  
+            <p>
+                Nello <ks>Sprint 0</ks>, sono stati formalizzati i concetti di
+                <ul>
+                    <li><b>mappa</b> della service area, costruita da celle quadrate di lato <b>RD</b></li>
+                    <li><b>posizione</b>, introducendo coppie di coordinate cartesiane per identificare ogni cella</li>
+                </ul>
+            </p>
+            <h4>KEYPOINTS</h4>
+            <ol>
+                <li>gestione del <em>movimento del trolley</em></li>
+                <li><em>interazione</em> tra i componenti</li>
+                <li><em>richieste multiple</em></li>
+            </ol>
+            
+        </div>
+
+
+        <!-- PROBLEM ANALYSIS -->  
+        <h2>Problem analysis</h2>
+        <div class="remark">
+            <h3 id="movimento-trolley">Movimento del trolley</h3>  
+            <p>
+                Come già indicato, il committente offre il servizio <a href="./html/BasicRobot24.html">BasicRobot24</a>.
+                Il servizio realizza un insieme di funzionalità diverse:
+                <ul>
+                    <li>
+                        esegue comandi elementari di movimento &ensp; <code><highlight>Dispatch 
+                            cmd:cmd(MOVE)</highlight></code> &ensp;
+                    </li>
+                    <li>
+                        introduce il concetto di <k>step</k> del robot 
+                        &ensp; <code><highlight>Request step:step(T)</highlight></code> &ensp;  
+                        che sposta il robot in avanti (con velocità prefissata) di una distanza <b>RD</b> in 
+                        un tempo <b>T</b>                      
+                    </li>
+                </ul>
+                Queste azioni sono eseguite direttamente dal <ks>basicrobot</ks>, mentre comandi più complessi sono delegati 
+                internamente a ulteriori componenti.
+            </p>
+            <p>
+                Per costruire dinamicamente una sequenza di mosse con cui il robot può muoversi dalla posizione corrente
+                <b>r</b> a un’altra posizione (libera) sulla 
+                <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#map">mappa</a>, 
+                si può usare un <a href="html/Planner.html">pianificatore</a> come quello fornito dal committente in <k>unibo.planner23-1.0.jar</k>.
+
+
+                <ul>
+                    <li>
+                         il componente <ks>robotpos</ks>, usando il planner, gestisce le richieste di posizionamento 
+                         &ensp; <code><highlight>Request moverobot:moverobot(TARGETX, TARGETY)</highlight></code> &ensp;
+                         <ul>
+                            <li>
+                                determina un piano di movimento per raggiungere la destinazione che viene eseguito tramite 
+                                <ks>planexec</ks>
+                            </li>
+                            <li>
+                                la risposta può essere <b>moverobotdone</b> in caso di successo, <b>moverobotfailed</b> 
+                                in caso di fallimento
+                            </li>
+                            <li>
+                                usa il comando &ensp; <code><highlight>Dispatch 
+                                setrobotstate:setpos(X,Y,D)</highlight></code> &ensp; per aggiornare
+                                la posizione del robot sulla mappa
+                            </li>
+                         </ul>
+                    </li>
+                    <li>
+                        il componente <ks>planexec</ks> gestisce le richieste &ensp; <code><highlight>Request 
+                            doplan:doplan(PATH,STEPTIME)</highlight></code> &ensp; per eseguire sequenze di movimento
+                        <ul>
+                            <li>
+                                invia la sequenza di mosse al <ks>basicrobot</ks> e riceve in risposta <b>doplandone</b> 
+                                in caso di successo, <b>doplanfailed</b> in caso di ostacolo o di evento <i>alarm</i>
+                            </li>
+                            <li>
+                                non usa e non modifica la mappa della stanza
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </p>
+
+            <h3>Interazione tra i componenti</h3>
+            <p>
+                Il <ks>trolley</ks> deve essere informato sull'arrivo del carico da ritirare alla <k>INDOOR port</k>. Di 
+                questo se ne occupa il <ks>coldstorageservice</ks>: una volta confermata la validità del ticket, il servizio
+                <ol>
+                    <li>
+                        invia un messaggio 
+                        &ensp; <code><highlight>Dispatch gotakecharge : gotakecharge( TICKET, LOAD )</highlight></code> &ensp; al 
+                        <ks>trolley</ks>
+                    </li>
+                    <li>
+                        torna nello stato di <i>waitrequest</i> così da poter gestire eventuali richieste che arrivano da altri 
+                        utenti. Quando riceve la notifica di completamento dell'azione del trolley, invia alla 
+                        <ks>serviceaccessgui</ks> la risposta 
+                        &ensp; <code><highlight>Reply chargetaken : chargetaken( TICKET )</highlight></code> &ensp; 
+                        e l'utente può lasciare la <k>INDOOR port</k>. 
+                    </li>
+                </ol>
+            </p>
+            <p>
+                Per poter realizzare l'interazione tra trolley e servizio, si è scelto di implementare il 
+                <b>Pattern Observer</b>:
+                <ul>
+                    <li>
+                        il trolley prende in carico il cibo alla <k>INDOOR port</k> e, una volta conclusa 
+                        l'operazione, notifica il cambiamento di stato al servizio
+                    </li>
+                    <li>
+                        il servizio in seguito risponde alla richiesta dell'utente, confermando con successo il risultato
+                    </li>
+                </ul>
+            </p>
+
+            <h3>Richieste multiple</h3>
+            <p>
+                Per la gestione delle richieste aperte, viene mantenuta una lista <b>list</b> in cui ogni richiesta 
+                viene memorizzata con
+                <ul>
+                    <li>il numero del <b>ticket</b> associato</li>
+                    <li>il <b>peso</b> del carico</li>
+                    <li>il <b>timestamp</b> della ricezione del 
+                        ticket</li>
+                </ul>
+                Alla ricezione della prima richiesta, viene aggiornata la variabile <b>CurrentLoad</b> (il carico attualmente 
+                presente della <i>coldroom</i>) così da mantenere il riferimento aggiornato in caso di più richieste. 
+                Se il ticket scade, il carico corrispondente viene rimosso.
+            </p>
+            <br>
+            <h3>Architettura del sistema</h3>
+            <p>
+                L'architettura del sistema è la seguente:
+                <br><br>
+                <img src="../coldstorageservicearch.png" alt="service arch" class="medium_image">
+                <br>Qui è possibile visualizzare il modello definito: 
+                    <a href="sprint-1/coldstorageservice.qaktt">link modello</a>
+            </p>
+        </div>
+
+
+        <h2>Project</h2>
+        <div class="remark">
+            <!-- GUI -->
+            <p>
+                
+                <h4 id="serviceaccessgui"><ks>SERVICE ACCESS GUI</ks></h4>
+                <pre>
+                    QActor serviceaccessgui context ctxcoldstorageservice {
+
+                        [# var Counter = 1 #]	
+                        
+                        
+                        State s0 initial {
+                            delay 1500  // Allow time for other actors to initialize
+                            printCurrentMessage
+                            println("$name START ") color blue
+                        }
+                        Goto sendstore
+                        
+                        // single request
+                        State sendstore {
+                            [# var CurrentWeight = ( Math.round( Math.random() * 100 ) )  #]
+                            println("$name SEND REQUEST kg $CurrentWeight") color blue
+                            request coldstorageservice -m storerequest : storerequest($CurrentWeight)
+                        }
+                        Transition t0 whenReply storeaccepted -> sendticket
+                                    whenReply storerefused -> endwork
+                                    
+                        // send the second request to the service	
+                        State sendticket {
+                            
+                            delay 1000
+                            onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
+                                
+                                [# 
+                                    var TicketNumber = payloadArg(0)
+                                    var Load = payloadArg(1)
+                                #]
+                                
+                                println("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
+                                
+                                delay 2000
+                                
+                                println("$name SENDING TICKET: $TicketNumber") color blue
+                                request coldstorageservice -m ticketrequest : ticketrequest($TicketNumber)
+                            }
+                        }
+                        Transition t0 whenReply chargetaken -> endwork
+                                    whenReply ticketrefused -> endwork
+                        
+                        //endwork
+                        State endwork{
+                            
+                            onMsg( storerefused : storerefused( X ) ) {
+                                
+                                [# var Load = payloadArg(0) #]
+                                println("$name - request of $Load kg refused. Not enough free space...") color blue
+                            }
+                            
+                            onMsg( ticketrefused : ticketrefused( X ) ) {
+                                
+                                [# var TicketNumber = payloadArg(0) #]
+                                println("$name - request n. $TicketNumber refused. Too much time has passed...") color blue
+                            }
+                            
+                            onMsg( chargetaken : chargetaken( X ) ) {
+                                
+                                [# var TicketNumber = payloadArg(0) #]
+                                println("$name - request n. $TicketNumber accepted and stored. All requests sent!") color blue
+                            }
+                            
+                            println("$name BYE  ") color blue
+                        }
+                    } 
+                </pre>
+                
+                La <ks>serviceaccessgui</ks> rimane invariata rispetto allo 
+                <b><a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 0</a></b>.
+            </p>
+            <!-- COLD STORAGE SERVICE -->
+            <p>
+                
+                <h4><ks>COLD STORAGE SERVICE</ks></h4>
+                <pre>
+                    QActor coldstorageservice context ctxcoldstorageservice {
+	
+	
+                        [# 
+                            val list = mutableListOf&lt;Triple&lt;Int, Float, Long&gt;&gt;()
+                            
+                            var MAXW = 200	
+                            var TICKETTIME = 15
+                            var CurrentLoad = 0f
+                            var TicketNumber = 1	
+                        #] 
+                      
+                        State s0 initial {
+                            delay 1000  // Allow time for other actors to initialize
+                            observeResource trolley msgid statustrolley
+                            println("$name OBSERVING RESOURCE statustrolley FROM trolley") color red
+                            
+                            printCurrentMessage
+                            println("$name START ") color green
+                        }
+                        Goto waitrequest 
+                          
+                        // wait request
+                        State waitrequest {
+                            println("$name waiting for requests... ") color green
+                        }
+                        Transition t0 whenRequest storerequest -> handlestore
+                                        whenRequest ticketrequest -> handleticket
+                                        whenMsg statustrolley -> handletrolley
+                                        
+                                     
+                        // handle the first request			
+                        State handlestore {
+                            onMsg( storerequest : storerequest( KG ) ) {
+                                
+                                [# 
+                                    var LoadToStore = payloadArg(0).toFloat() 
+                                    var FreeSpace = MAXW - CurrentLoad 
+                                #]
+                                println("$name received request to store $LoadToStore kg") color green
+                                
+                                if [# LoadToStore <= FreeSpace #] {
+                                    
+                                    println("$name accepting load of $LoadToStore kg ") color green
+                                    println("$name generating ticket n. $TicketNumber") color green
+                                    [#
+                                        list.add( Triple( TicketNumber, LoadToStore, System.currentTimeMillis() ) )
+                                        CurrentLoad = CurrentLoad + LoadToStore
+                                    #]
+                                    println("Current load in the cold room: $CurrentLoad ")
+                                    
+                                    replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber, $LoadToStore )
+                                    [# TicketNumber = TicketNumber + 1 #]
+                                } else {
+                                    println("$name refusing load of $LoadToStore kg") color green
+                                    replyTo storerequest with storerefused : storerefused( $LoadToStore  )
+                                }
+                                
+                                [#
+                                    println(list)      		
+                                #]
+                            }  
+                        }
+                        Goto waitrequest 
+                        
+                        // handle the second request
+                        State handleticket {
+                            onMsg( ticketrequest : ticketrequest( X ) ) {
+                                
+                                [# var Ticket = payloadArg(0).toInt() #]
+                                println("$name received ticket n. $Ticket") color green
+                                
+                                [# 
+                                     val request = list.find { it.first == Ticket }
+                                    var ElapsedTime = ( System.currentTimeMillis() - request!!.third )
+                                    var Load = request.second
+                                #]
+                                
+                                if [# ( ElapsedTime/1000 ) < TICKETTIME #] {
+                                    
+                                    println("$name accepting ticket n. $Ticket ($Load kg)") color green
+                                    println("$name sending request to trolley...") color green
+                                    
+                                    forward trolley -m gotakecharge : gotakecharge( $Ticket, $Load )
+                                    //replyTo ticketrequest with chargetaken : chargetaken( $TicketNumber )
+                                    
+                                    
+                                } else {
+                                    println("$name refusing ticket n. $Ticket ($Load kg) - EXPIRED ") color green
+                                    
+                                    replyTo ticketrequest with ticketrefused : ticketrefused( $TicketNumber )
+                                    [# 
+                                        CurrentLoad = CurrentLoad - Load
+                                        list.remove(request)
+                                        println(list) 
+                                    #]
+                                }
+                                
+                                 
+                            } 
+                        }
+                        Goto waitrequest
+                        
+                        State handletrolley {
+                            onMsg( statustrolley  : statustrolley ( X, Y ) ) {
+                                [# 
+                                    var Ticket = payloadArg(0)
+                                    var Status = payloadArg(1)
+                                #]
+                                
+                                if [# Status == "init" #] {
+                                    println("$name - received the update of $Status  ")
+                                }
+                                
+                                if [# Status == "takeload" #] {
+                                    println("$name - trolley is in status: $Status for ticket $Ticket ")
+                                    println("$name - sending CHARGE TAKEN...")
+                                    replyTo ticketrequest with chargetaken : chargetaken( $Ticket )
+                                    
+                                    [# 
+                                        val request = list.find { it.first == Ticket.toInt() }
+                                        list.remove(request)
+                                        println(list) 
+                                    #]
+                                }
+                            }
+                        }
+                        Goto waitrequest
+                        
+                        // timeout?
+                        State endwork {
+                            println("$name END WORK.")
+                            delay 1000 //avoid to premature abort of connection
+                            [# System.exit(0) #]
+                        }
+                    }
+                    
+                </pre>
+                Modifiche rispetto allo <b>Sprint 0</b>:
+                <p>
+                    <ul>
+                        <li>
+                            alle variabili di sistema viene aggiunta <b>list</b>, per tenere traccia 
+                            delle richieste aperte 
+                        </li>
+                        <li>
+                            <em>s0</em>: il <ks>coldstorageservice</ks> si registra come <bc>observer</bc> del 
+                            trolley per i messaggi <code>statustrolley</code>
+                        </li>
+                        <li>
+                            <em>waitrequest</em>: oltre alle due possibili richieste inviate dalla 
+                            <ks>serviceaccessgui</ks>, il servizio gestisce anche i messaggi del trolley
+                        </li>
+                        <li>
+                            <em>handlestore</em>: se la richiesta è accettata, viene aggiunta la tripla 
+                            corrispondente alla lista. Ogni richiesta è identificata da 
+                            <ul>
+                                <li><b>TicketNumber</b>: il numero del ticket</li>
+                                <li><b>LoadToStore</b>: il peso del carico</li>
+                                <li><b>System.currentTimeMillis()</b>: il timestamp di ricezione della richiesta</li>
+                            </ul>
+                            Ricevuta la richiesta, si aggiorna il carico <b>CurrentLoad</b> presente nella <i>cold room</i> 
+                            viene aggiornato
+                        </li>
+                        <li>
+                            <em>handleticket</em>: se il ticket non è scaduto, viene inviato al trolley un 
+                            messaggio per muoverlo in direzione della <k>INDOOR port</k> 
+                        </li>
+                        <li>
+                            <em>handletrolley</em>: una volta che il trolley ha preso il carico, il servizio chiude la 
+                            richiesta inviando il messaggio finale <code>chargetaken</code> e rimuove la richiesta dalla lista
+                        </li>
+                    </ul>
+                </p>
+                
+            </p>
+            <!-- TROLLEY -->
+            <p>
+                
+                <h4><ks>TROLLEY</ks></h4>
+                <pre>
+                    QActor trolley context ctxcoldstorageservice {
+                        [#
+                            var Status = "init"
+                            var Ticket = 0
+                            var Load = 0f
+                        #]
+                        
+                        State s0 initial {
+                            updateResource [# "statustrolley( $Ticket, $Status )" #]  // Ensure the resource exists
+                            println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+                            
+                            printCurrentMessage
+                            println("$name START ") color magenta
+                            println("$name engage BASIC ROBOT ") color magenta
+                            request basicrobot -m engage: engage(trolley, 150)
+                        } 
+                        Transition t0 whenReply engagedone -> waitrequest
+                        
+                        
+                        // wait for a request
+                        State waitrequest {
+                            forward basicrobot -m setrobotstate : setpos(0,0,down)
+                            println("$name waiting for requests...") color magenta
+                            
+                        }  
+                        Transition t0 whenMsg gotakecharge -> gotoindoor
+                        
+                        // go to indoot
+                        State gotoindoor { 
+                            println("$name moving to INDOOR") color magenta
+                            
+                            onMsg( gotakecharge : gotakecharge( TICKET, LOAD ) ){
+                                
+                                [# 
+                                    Ticket = payloadArg(0).toInt()
+                                    Load = payloadArg(1).toFloat() 
+                                #]		
+                                println("$name taking charge - ticket n. $Ticket, $Load kg ") color magenta
+                                //replyTo gotakecharge with chargetaken : chargetaken( $Ticket )
+                                //updateResource			
+                              }      	
+                            delay 500 // simulate the movement
+                            request basicrobot -m moverobot : moverobot (0,4) //(0,4) position of INDOOR
+                        }
+                        Transition t0 whenReply moverobotdone -> takeload
+                                        whenReply moverobotfailed -> failed
+                        
+                        // take the load 
+                        State takeload {
+                            [# Status = "takeload" #]
+                            println("$name taking the load...") color magenta
+                            
+                            //[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
+                            delay 500
+                            updateResource [# "statustrolley( $Ticket, $Status )" #]  
+                            println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+                        } 
+                        Goto gotocoldroom
+                        
+                        // go to cold room
+                        State gotocoldroom {
+                            
+                            println("$name moving to COLDROOM") color magenta
+                            request basicrobot -m moverobot: moverobot(4,3)
+                            delay 5000 // simulate the movement
+                        }
+                        Transition t0 whenReply moverobotdone -> storeload
+                                             whenReply moverobotfailed -> failed
+                        
+                        // store the load
+                        State storeload {
+                            
+                            println("$name storing the load...") color magenta
+                            delay 500
+                            // waits for requests
+                        } 
+                        Transition t0 whenTime 2000 -> gohome
+                                         whenMsg gotakecharge -> gotoindoor
+                         
+                        // go home
+                        State gohome{
+                            
+                            println("$name going HOME...") color magenta
+                            request basicrobot -m moverobot: moverobot (0 ,0)
+                            delay 2000 // simulate the movement 
+                        }
+                        Transition t0 whenReply moverobotdone -> trolleyathome
+                                            whenReply moverobotfailed -> failed
+                        
+                        // at home
+                        State trolleyathome {
+                            forward basicrobot -m setdirection : dir(down)
+                            println("$name trolley at home") color magenta
+                            forward basicrobot -m disengage : disengage(trolley)
+                            
+                            println("$name  disengaged") color magenta
+                            delay 1000 //avoid to premature abort of connection
+                            [# System.exit(0) #]
+                        }
+                         
+                        //failed
+                        State failed {
+                            println("$name action failed") color magenta
+                        }
+                        Goto gohome
+                    }
+                </pre>
+                Modifiche rispetto allo <b>Sprint 0</b>:
+                <p>
+                    <ul>
+                        <li>
+                            viene aggiunta una variabile <b>Status</b> per tenere traccia dello stato del trolley
+                        </li>
+                        <li>
+                            il <ks>trolley</ks> richiede l'ingaggio del <bc>robot</bc> con 
+                            <a href="#movimento-trolley"><b>step time</b></a> di <k>150 ms</k>
+                        </li>
+                        <li>
+                            <em>waitrequest</em>: il messaggio <code>setrobotstate : setpos(0, 0, down)</code> imposta 
+                            il robot nella posizione <k>HOME</k> per settarlo correttamente all'avvio
+                        </li>
+                        <li>
+                            <em>gotoindoor</em>: una volta ricevuto il messaggio <code>gotakecharge</code> dal sistema, 
+                            il robot si sposta alla posizione (0, 4), posizione della <k>INDOOR port</k>
+                            <ul>
+                                <li><i>moverobotdone</i>: in caso di spostamento riuscito, il trolley carica il cibo</li>
+                                <li><i>moverobotfailed</i>: se lo spostamento fallisce, il robot ritorna alla <k>HOME</k></li>
+                            </ul> 
+                        </li>
+                        <li>
+                            <em>takeload</em>: una volta caricato il carico, il trolley aggiorna il proprio stato
+                        </li>
+                        <li>
+                            <em>gotocoldroom</em>: il trolley invia al robot la richiesta <code>moverobot(4, 3)</code> 
+                            per raggiungere la porta di accesso alla <k>cold room</k>
+                            <ul>
+                                <li><i>moverobotdone</i>: il carico viene scaricato</li>
+                                <li><i>moverobotfailed</i>: se lo spostamento fallisce, il robot ritorna alla <k>HOME</k></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <em>storeload</em>: una volta scaricato il carico nella <k>cold room</k>:
+                            <ul>
+                                <li>se c'è un'altra richiesta, il robot torna alla <k>INDOOR port</k> per ripetere 
+                                    le operazioni</li>
+                                <li>se entro un dato intervallo di tempo non arrivano altre richieste, il robot 
+                                    torna in <k>HOME</k></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <em>gohome</em>: il trolley invia una richiesta <code>moverobot(0, 0)</code> per riportare il 
+                            robot alla posizione iniziale
+                        </li>
+                        <li>
+                            <em>trolleyathome</em>: il trolley ruota il robot per riportarlo nella direzione iniziale e 
+                            viene disingaggiato, per poi uscire dal sistema
+                        </li>
+                    </ul>
+                </p>
+                
+            </p>            
+        </div> 
+
+        <h2>Test plans</h2>
+        <div class="remark">
+            <p>
+                Come nello sprint precedente, per testare la corretta gestione delle richieste inviate al sistema 
+                è stata realizzata una variante del modello in cui i messaggi non vengono inviati dalla <ks>serviceaccessgui</ks>
+                ma usando  una specifica test class.
+            </p>
+            
+            <ul>
+                <li>
+                    <a href="sprint-1/sprint-1-test.qaktt">Link modello <ks>coldstorageservice</ks> per test</a>
+                </li>
+                <li>
+                    <a href="sprint-1/ColdStorageServiceTestSprint1.java">Link test unit</a>
+                </li>
+            </ul>
+
+            <p>
+                <h4><ks>storeRequestTest()</ks></h4>
+                <pre>
+                    public class ColdStorageServiceTestSprint1 {
+	
+                        public static final String ADDR		= "localhost";
+                        public static final int PORT		= 8015;
+                        public static final String MSG		= "msg( storerequest, request, serviceaccesgui, coldstorageservice, storerequest(5), 5 )";
+                        public static final String REPLY	= "storeaccepted";
+                        
+                        @Test
+                        public void storeRequestTest() {
+                            
+                            
+                            try (
+                                    Socket client = new Socket(ADDR, PORT);
+                                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                                
+                            ){
+                    
+                                    // send store request
+                                    out.write(MSG);
+                                    out.newLine(); // ensure the message ends properly
+                                    out.flush();
+                                    
+                                    //wait for response
+                                    String response = in.readLine();
+                                    assertNotNull("The response is null", response);
+                                    assertTrue("The response doesn't contain 'storeaccepted'", response.contains(REPLY) );
+                                            
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }	
+                        }
+                </pre>
+                Test sul funzionamento del sistema: viene inviata la richiesta di depositare un numero di KG inferiore a 
+                <b>MAXW</b> e si verifica che la richiesta venga accettata.
+
+                <br>
+                <h4><ks>handleTicketTest()</ks></h4>
+                <pre>
+                    @Test
+                    public void handleTicketTest() {
+                        
+                        
+                        try (
+                            Socket client = new Socket(ADDR, PORT);
+                            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
+                        ) {
+                            // send store request
+                            out.write(MSG);
+                            out.newLine();
+                            out.flush();
+
+                            // wait for response
+                            String response = in.readLine();
+                            assertNotNull("The response is null ", response);
+                            assertTrue("The response doesn't contain 'storeaccepted' ", response.contains(REPLY));
+
+                            // extract ticket number 
+                            String ticketNumber = response.replaceAll("[^0-9]+", " ").trim().split(" ")[0]; 
+                            System.out.println("Extracted ticket number: " + ticketNumber);
+
+                            // Wait before sending the second request
+                            Thread.sleep(3000); // Or use TimeUnit.MILLISECONDS.sleep(1000);
+
+                            // Send second request using the ticket
+                            String ticketRequest = "msg( ticketrequest, request, serviceaccesgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
+                            out.write(ticketRequest);
+                            out.newLine();
+                            out.flush();
+
+                            // Wait for response
+                            String ticketResponse = in.readLine();
+                            assertNotNull("The response to the ticket is null ", ticketResponse);
+                            assertTrue("The ticket is expired... ", 
+                                    ticketResponse.contains("chargetaken"));
+
+                        } catch (IOException | InterruptedException e) {
+                            e.printStackTrace();
+                            fail("Exception thrown during test execution: " + e.getMessage());
+                        }
+                    }
+                </pre>
+                Test sulla gestione della seconda richiesta: dopo aver ricevuto il ticket, viene inviata una 
+                seconda richiesta al sistema prima dello scadere del <b>TICKETTIME</b> e il ticket risulta valido.
+            </p>
+        </div>
+        
+
+        <h2>Piano di lavoro</h2> 
+        <div class="remark">
+            <table>
+                <tr>
+                    <td><b>SPRINT2</b></td>
+                    <td>
+                        <ul>
+                            <li>estensione del sistema con introduzione degli alarm requirements</li>
+                            <li>gestione fallimenti del robot</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>SPRINT3</b></td>
+                    <td>
+                        <ul>
+                            <li>realizzazione GUI di sistema</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        </div> 
+
+        
+       
+        
+        <!-- USEFUL
+        <table style="width:100%" border="1">
+        <tr>
+        <td style="width:50%">
+        </td>
+        <td></td>
+        </tr>
+        </table>
+        -->
+                    
+        <br/><br/> 	
+        </div>  
+
+        <div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;color:white">
+        <ul>
+            <li>By Letizia Mancini</li>
+            <li>email: letizia.mancini3@studio.unibo.it </li>
+            <li>
+                GIT repo: <a href="https://github.com/llevtizia/coldstorageservice-iss2023">https://github.com/llevtizia/coldstorageservice-iss2023</a> 
+            </li>
+            <li>matricola: 0000926656</li>
+        </ul>
+
+
+        <img src="html/_images/picture.jpg" alt="picture" width="15%" height="15%" margin-left="2%">
+
+        </div> 
+    </body>
+</html>

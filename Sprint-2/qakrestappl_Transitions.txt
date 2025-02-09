@@ -1,0 +1,3 @@
+{"actor":"coldstorageservice", "msgType":"dispatch", "curstate":"waitrequest", "nextstate":"handletrolley", "msgId":"statustrolley"}
+{"actor":"trolley", "msgType":"dispatch", "curstate":"waitrequest", "nextstate":"gotoindoor", "msgId":"gotakecharge"}
+{"actor":"trolley", "msgType":"dispatch", "curstate":"storeload", "nextstate":"gotoindoor", "msgId":"gotakecharge"}
