@@ -31,7 +31,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						delay(1000) 
+						delay(4000) 
 						observeResource("localhost","8015","ctxcoldstorageservice","trolley","statustrolley")
 						CommUtils.outred("$name OBSERVING RESOURCE statustrolley FROM trolley")
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
@@ -55,6 +55,8 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					 transition(edgeName="t04",targetState="handlestore",cond=whenRequest("storerequest"))
 					transition(edgeName="t05",targetState="handleticket",cond=whenRequest("ticketrequest"))
 					transition(edgeName="t06",targetState="handletrolley",cond=whenDispatch("statustrolley"))
+					transition(edgeName="t07",targetState="handlestop",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t08",targetState="handleresume",cond=whenDispatch("resumetrolley"))
 				}	 
 				state("handlestore") { //this:State
 					action { //it:State
@@ -63,7 +65,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								 
 												var LoadToStore = payloadArg(0).toFloat() 
 												var FreeSpace = MAXW - CurrentLoad 
-								CommUtils.outgreen("$name received request to store $LoadToStore kg")
+								CommUtils.outgreen("$name received first request to store $LoadToStore kg")
 								if(  LoadToStore <= FreeSpace  
 								 ){CommUtils.outgreen("$name accepting load of $LoadToStore kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
@@ -101,6 +103,8 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								if(  ( ElapsedTime/1000 ) < TICKETTIME  
 								 ){CommUtils.outgreen("$name accepting ticket n. $Ticket ($Load kg)")
 								CommUtils.outgreen("$name sending request to trolley...")
+								delay(1000) 
+								CommUtils.outgreen("$name | SENDING gotakecharge to trolley - Ticket: $Ticket")
 								forward("gotakecharge", "gotakecharge($Ticket,$Load)" ,"trolley" ) 
 								}
 								else
@@ -138,6 +142,35 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 													list.remove(request)
 								        			println(list) 
 								}
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handlestop") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("stoptrolley(X)"), Term.createTerm("stoptrolley(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outred("$name - stopping the trolley...")
+								forward("stoptrolley", "stoptrolley(X)" ,"trolley" ) 
+								delay(100) 
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handleresume") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("resumetrolley(X)"), Term.createTerm("resumetrolley(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outgreen("$name - resuming the trolley...")
+								forward("resumetrolley", "resumetrolley(X)" ,"trolley" ) 
 						}
 						//genTimer( actor, state )
 					}

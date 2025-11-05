@@ -18,6 +18,11 @@ reply( chargetaken, chargetaken(TICKET) ).  %%for ticketrequest
 reply( ticketrefused, ticketrefused(TICKET) ).  %%for ticketrequest
 dispatch( gotakecharge, gotakecharge(X,Y) ).
 dispatch( statustrolley, statustrolley(X,Y) ).
+event( alarm, alarm(X) ).
+dispatch( stoptrolley, stoptrolley(X) ).
+dispatch( resumetrolley, resumetrolley(X) ).
+dispatch( tryagain, tryagain(X) ).
+dispatch( restart, restart(X) ).
 %====================================================================================
 context(ctxcoldstorageservice, "localhost",  "TCP", "8015").
 context(ctxbasicrobot, "127.0.0.1",  "TCP", "8020").

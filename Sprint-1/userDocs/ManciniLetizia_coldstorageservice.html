@@ -63,12 +63,147 @@
                     <li><b>posizione</b>, introducendo coppie di coordinate cartesiane per identificare ogni cella</li>
                 </ul>
             </p>
-            <h4>KEYPOINTS</h4>
+            <h3>KEYPOINTS</h3>
             <ol>
                 <li>gestione del <em>movimento del trolley</em></li>
                 <li><em>interazione</em> tra i componenti</li>
                 <li><em>richieste multiple</em></li>
             </ol>
+            <br>
+            
+            <h4 id="movimento-trolley">1 - MOVIMENTO DEL TROLLEY</h4>
+            <p>
+                <p>
+                    Come già definito nello Sprint 0, il committente offre il servizio 
+                    <a href="./html/BasicRobot24.html">BasicRobot24</a>.
+                    Il servizio realizza un insieme di funzionalità diverse:
+                    <ul>
+                        <li>
+                            esegue comandi elementari di movimento &ensp; <code><highlight>Dispatch 
+                                cmd:cmd(MOVE)</highlight></code> &ensp;
+                        </li>
+                        <li>
+                            introduce il concetto di <k>step</k> del robot 
+                            &ensp; <code><highlight>Request step:step(T)</highlight></code> &ensp;  
+                            che sposta il robot in avanti (con velocità prefissata) di una distanza <b>RD</b> in 
+                            un tempo <b>T</b>                      
+                        </li>
+                    </ul>
+                    Queste azioni sono eseguite direttamente dal <ks>basicrobot</ks>, mentre comandi più complessi sono delegati 
+                    internamente a ulteriori componenti.
+                </p>
+                <p>
+                    Per costruire dinamicamente una sequenza di mosse con cui il robot può muoversi dalla posizione corrente
+                    <b>r</b> a un’altra posizione (libera) sulla 
+                    <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#map">mappa</a>, 
+                    si può usare un <a href="html/Planner.html">pianificatore</a> come quello fornito dal committente in <k>unibo.planner23-1.0.jar</k>.
+    
+    
+                    <ul>
+                        <li>
+                             il componente <ks>robotpos</ks>, usando il planner, gestisce le richieste di posizionamento 
+                             &ensp; <code><highlight>Request moverobot:moverobot(TARGETX, TARGETY)</highlight></code> &ensp;
+                             <ul>
+                                <li>
+                                    determina un piano di movimento per raggiungere la destinazione che viene eseguito tramite 
+                                    <ks>planexec</ks>
+                                </li>
+                                <li>
+                                    la risposta può essere <b>moverobotdone</b> in caso di successo, <b>moverobotfailed</b> 
+                                    in caso di fallimento
+                                </li>
+                                <li>
+                                    usa il comando &ensp; <code><highlight>Dispatch 
+                                    setrobotstate:setpos(X,Y,D)</highlight></code> &ensp; per aggiornare
+                                    la posizione del robot sulla mappa
+                                </li>
+                             </ul>
+                        </li>
+                        <li>
+                            il componente <ks>planexec</ks> gestisce le richieste &ensp; <code><highlight>Request 
+                                doplan:doplan(PATH,STEPTIME)</highlight></code> &ensp; per eseguire sequenze di movimento
+                            <ul>
+                                <li>
+                                    invia la sequenza di mosse al <ks>basicrobot</ks> e riceve in risposta <b>doplandone</b> 
+                                    in caso di successo, <b>doplanfailed</b> in caso di ostacolo o di evento <i>alarm</i>
+                                </li>
+                                <li>
+                                    non usa e non modifica la mappa della stanza
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </p>
+            </p>
+
+            <h4>2 - INTERAZIONE TRA I COMPONENTI</h4>
+            <p>
+                <p>
+                    Il <ks>trolley</ks> deve essere informato sull'arrivo del carico da ritirare alla <k>INDOOR port</k> per 
+                    eseguire una <b>deposit action</b>, che consiste in tre fasi:
+                    <ol>
+                        <li>prende il load in carico dal <i>Fridge truck</i> alla <k>INDOOR port</k></li>
+                        <li>si sposta dalla INDOOR alla <k>porta</k> della <b>coldroom</b></li>
+                        <li>deposita il load nella <b>coldroom</b></li>
+                    </ol>
+                </p>
+                <p>
+                    Dalle <a href="../../Sprint-0/userDocs/html/TemaFinale23.html#service-users-story">user stories</a> fornite 
+                    dal committente:
+                        <ul>
+                            <li>
+                                il driver usa la <i>serviceaccessgui</i> per inviare una richiesta di deposito di 
+                                <b>FW</b> kg al <i>coldstorageservice</i>. Se la richiesta è accettata, il driver riceve un <k>ticket</k>
+                                e si sposta alla <k>INDOOR port</k>
+                            </li>
+                            <li>
+                                il driver, una volta raggiunta la <k>INDOOR port</k>, usa nuovamente la <i>serviceaccessgui</i> per 
+                                inviare una richiesta con il numero del ticket e aspetta fino a quando il <i>coldstorageservice</i> 
+                                risponde con il messaggio <b>charge taken</b>
+                            </li>
+                            <li>
+                                quando il servizio accetta un ticket, il <i>trolley</i> raggiunge la <k>INDOOR port</k>, carica il
+                                load, manda il messaggio <b>charge taken</b> e si sposta alla <ks>coldroom</ks> per scaricare il load
+                            </li>
+                        </ul>
+                </p>
+                <p>
+                    Ala prima richiesta <code>Request storerequest  : storerequest( KG ) </code> inviata dalla <i>gui</i>
+                    il <i>coldstorageservice</i> può rispondere con due possibili reply:
+                    <ul>
+                        <li>
+                            <code>Reply storeaccepted   : storeaccepted( TICKET, KG )</code> nel caso in cui la richiesta 
+                            sia accettata
+                        </li>
+                        <li>
+                            <code>Reply storerefused    : storerefused( X )</code> se non è accettata
+                        </li>
+                    </ul>
+                    <br>
+                    Si ha invece un conflitto sulla gestione della seconda richiesta 
+                    <code>Request ticketrequest : ticketrequest( TICKET )</code>: sia il trolley che il servizio, in base 
+                    alle <i>user stories</i>, rispondono con il messaggio <b>charge taken</b>
+                </p>
+                <p>
+                    Si presentano due scenari possibili:
+                    <ol>
+                        <li>
+                            il <ks>coldstorageservice</ks> accetta la richiesta da parte della <ks>gui</ks> ed 
+                            interagisce con il <ks>trolley</ks>. Una volta che il trolley ha caricato il load, questo invia 
+                            un messaggio <b>charge taken</b> al servizio, che risponde alla gui e chiude l'interazione
+                        </li>
+                        <li>
+                            in alternativa, il <ks>trolley</ks> dovrebbe rispondere direttamente alla richiesta inviata dalla 
+                            <ks>gui</ks> senza passare dal servizio, ma questo comporta una maggiore complessità perché si fa 
+                            carico della risposta un attore diverso da quello che ha ricevuto la richiesta.
+                        </li>
+                    </ol>
+                    Dato che il <i>coldstorageservice</i> si occupa della ricezione e della risposta della prima richiesta, 
+                    dopo un colloquio con il committente si è stabilito di lasciare al service la gestione anche della seconda
+                    (con invio del messaggio <b>charge taken</b> alla gui). Il servizio svolge un ruolo di <i>mediatore</i>.
+                </p>
+                
+            </p>
             
         </div>
 
@@ -76,100 +211,68 @@
         <!-- PROBLEM ANALYSIS -->  
         <h2>Problem analysis</h2>
         <div class="remark">
-            <h3 id="movimento-trolley">Movimento del trolley</h3>  
-            <p>
-                Come già indicato, il committente offre il servizio <a href="./html/BasicRobot24.html">BasicRobot24</a>.
-                Il servizio realizza un insieme di funzionalità diverse:
-                <ul>
-                    <li>
-                        esegue comandi elementari di movimento &ensp; <code><highlight>Dispatch 
-                            cmd:cmd(MOVE)</highlight></code> &ensp;
-                    </li>
-                    <li>
-                        introduce il concetto di <k>step</k> del robot 
-                        &ensp; <code><highlight>Request step:step(T)</highlight></code> &ensp;  
-                        che sposta il robot in avanti (con velocità prefissata) di una distanza <b>RD</b> in 
-                        un tempo <b>T</b>                      
-                    </li>
-                </ul>
-                Queste azioni sono eseguite direttamente dal <ks>basicrobot</ks>, mentre comandi più complessi sono delegati 
-                internamente a ulteriori componenti.
-            </p>
-            <p>
-                Per costruire dinamicamente una sequenza di mosse con cui il robot può muoversi dalla posizione corrente
-                <b>r</b> a un’altra posizione (libera) sulla 
-                <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#map">mappa</a>, 
-                si può usare un <a href="html/Planner.html">pianificatore</a> come quello fornito dal committente in <k>unibo.planner23-1.0.jar</k>.
 
+            <h3><b>charge taken</b></h3>  
+                <p>
+                    Come stabilito dall'analisi dei requisiti, il <ks>coldstorageservice</ks> gestisce le richieste inviate 
+                    dalla <ks>serviceaccessgui</ks>: una volta terminata con successo la prima richiesta, la <i>gui</i> invia una 
+                    seconda.
+                </p>
+                <p>
+                    <ol>
+                        <li>
+                            La prima richiesta è formalizzata come una <code>Request</code>: l'utente, utilizzando la 
+                            <i>serviceaccessgui</i> invia una richiesta al <i>coldstorageservice</i> e attende la <code>Reply</code> 
+                            da parte di questo
+                        </li>
+                        <li>
+                            La seconda richiesta è sempre un'interazione <code>request/reply</code> tra <i>serviceaccessgui</i> 
+                            e <i>coldstorageservice</i>, in quanto l'azione del cliente non termina prima di aver ricevuto la risposta 
+                            alla richiesta, ma l'interazione tra il servizio e il trolley può essere formalizzata
+                            <ul>
+                                <li>con un <b>dispatch</b></li>
+                                <li>con una <b>request</b></li>
+                            </ul>
+                        </li>
+                    </ol>
 
-                <ul>
-                    <li>
-                         il componente <ks>robotpos</ks>, usando il planner, gestisce le richieste di posizionamento 
-                         &ensp; <code><highlight>Request moverobot:moverobot(TARGETX, TARGETY)</highlight></code> &ensp;
-                         <ul>
-                            <li>
-                                determina un piano di movimento per raggiungere la destinazione che viene eseguito tramite 
-                                <ks>planexec</ks>
-                            </li>
-                            <li>
-                                la risposta può essere <b>moverobotdone</b> in caso di successo, <b>moverobotfailed</b> 
-                                in caso di fallimento
-                            </li>
-                            <li>
-                                usa il comando &ensp; <code><highlight>Dispatch 
-                                setrobotstate:setpos(X,Y,D)</highlight></code> &ensp; per aggiornare
-                                la posizione del robot sulla mappa
-                            </li>
-                         </ul>
-                    </li>
-                    <li>
-                        il componente <ks>planexec</ks> gestisce le richieste &ensp; <code><highlight>Request 
-                            doplan:doplan(PATH,STEPTIME)</highlight></code> &ensp; per eseguire sequenze di movimento
-                        <ul>
-                            <li>
-                                invia la sequenza di mosse al <ks>basicrobot</ks> e riceve in risposta <b>doplandone</b> 
-                                in caso di successo, <b>doplanfailed</b> in caso di ostacolo o di evento <i>alarm</i>
-                            </li>
-                            <li>
-                                non usa e non modifica la mappa della stanza
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </p>
+                    <h4>request</h4>
+                    Se il servizio inviasse una <i>request</i>, l'interazione con il trolley diventerebbe bloccante: fino all'arrivo della 
+                    relativa <i>reply</i>, non si avrebbe la possibilità di gestire altre richieste e questo porterebbe ad allungare i tempi 
+                    del servizio.
 
-            <h3>Interazione tra i componenti</h3>
-            <p>
-                Il <ks>trolley</ks> deve essere informato sull'arrivo del carico da ritirare alla <k>INDOOR port</k>. Di 
-                questo se ne occupa il <ks>coldstorageservice</ks>: una volta confermata la validità del ticket, il servizio
-                <ol>
-                    <li>
-                        invia un messaggio 
-                        &ensp; <code><highlight>Dispatch gotakecharge : gotakecharge( TICKET, LOAD )</highlight></code> &ensp; al 
-                        <ks>trolley</ks>
-                    </li>
-                    <li>
-                        torna nello stato di <i>waitrequest</i> così da poter gestire eventuali richieste che arrivano da altri 
-                        utenti. Quando riceve la notifica di completamento dell'azione del trolley, invia alla 
-                        <ks>serviceaccessgui</ks> la risposta 
-                        &ensp; <code><highlight>Reply chargetaken : chargetaken( TICKET )</highlight></code> &ensp; 
-                        e l'utente può lasciare la <k>INDOOR port</k>. 
-                    </li>
-                </ol>
-            </p>
-            <p>
-                Per poter realizzare l'interazione tra trolley e servizio, si è scelto di implementare il 
-                <b>Pattern Observer</b>:
-                <ul>
-                    <li>
-                        il trolley prende in carico il cibo alla <k>INDOOR port</k> e, una volta conclusa 
-                        l'operazione, notifica il cambiamento di stato al servizio
-                    </li>
-                    <li>
-                        il servizio in seguito risponde alla richiesta dell'utente, confermando con successo il risultato
-                    </li>
-                </ul>
-            </p>
+                    <h4>dispatch</h4>
+                    Il servizio 
+                    <ol>
+                        <li>
+                            invia un messaggio 
+                            &ensp; <code><highlight>Dispatch gotakecharge : gotakecharge( TICKET, LOAD )</highlight></code> &ensp; al 
+                            <ks>trolley</ks>
+                        </li>
+                        <li>
+                            torna nello stato di <i>waitrequest</i> così da poter gestire eventuali richieste che arrivano da altri 
+                            utenti. Quando riceve la notifica di completamento dell'azione del trolley, invia alla 
+                            <ks>serviceaccessgui</ks> la risposta 
+                            &ensp; <code><highlight>Reply chargetaken : chargetaken( TICKET )</highlight></code> &ensp; 
+                            e l'utente può lasciare la <k>INDOOR port</k>. 
+                        </li>
+                    </ol>
+                    
+                </p>
+                 
+                <p>
+                    Per poter realizzare l'interazione tra trolley e servizio, si è scelto di implementare il 
+                    <b>Pattern Observer</b> grazie alla <b>osservabilità intrinseca</b> dei QActor (riduzione dell'abstraction gap)
+                    <ul>
+                        <li>
+                            il trolley prende in carico il cibo alla <k>INDOOR port</k> e, una volta conclusa 
+                            l'operazione, notifica il cambiamento di stato al servizio
+                        </li>
+                        <li>
+                            il servizio in seguito risponde alla richiesta dell'utente, confermando con successo il risultato
+                        </li>
+                    </ul>
+                </p>
 
             <h3>Richieste multiple</h3>
             <p>
@@ -649,7 +752,7 @@
 	
                         public static final String ADDR		= "localhost";
                         public static final int PORT		= 8015;
-                        public static final String MSG		= "msg( storerequest, request, serviceaccesgui, coldstorageservice, storerequest(5), 5 )";
+                        public static final String MSG		= "msg( storerequest, request, serviceaccessgui, coldstorageservice, storerequest(5), 5 )";
                         public static final String REPLY	= "storeaccepted";
                         
                         @Test
@@ -712,7 +815,7 @@
                             Thread.sleep(3000); // Or use TimeUnit.MILLISECONDS.sleep(1000);
 
                             // Send second request using the ticket
-                            String ticketRequest = "msg( ticketrequest, request, serviceaccesgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
+                            String ticketRequest = "msg( ticketrequest, request, serviceaccessgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
                             out.write(ticketRequest);
                             out.newLine();
                             out.flush();

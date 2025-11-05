@@ -30,6 +30,15 @@ Dispatch gotakecharge	: gotakecharge( X, Y )
 Dispatch statustrolley  : statustrolley( X, Y )
 //-------------------------------------------------------------------------------
 
+// Sprint 2 
+Event alarm				: alarm( X ) //stop the basicrobot
+Dispatch stoptrolley	: stoptrolley( X )
+Dispatch resumetrolley	: resumetrolley( X )
+
+Dispatch tryagain		: tryagain( X ) // per riprovare dopo un fail
+Dispatch restart		: restart( X ) // per ripartire dopo resume
+
+
 Context ctxcoldstorageservice ip [host="localhost" port=8015] 
 Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
 
@@ -43,7 +52,7 @@ QActor serviceaccessgui context ctxcoldstorageservice {
 	
 	
 	State s0 initial {
-		delay 1500  // Allow time for other actors to initialize
+		delay 4000  // Allow time for other actors to initialize
 		printCurrentMessage
 		println("$name START ") color blue
 	}
@@ -110,7 +119,7 @@ QActor serviceaccessgui context ctxcoldstorageservice {
 	// send the second request to the service	
 	State sendticket {
 		
-		delay 1000
+		delay 2000
 		onMsg( storeaccepted : storeaccepted( TICKET, KG ) ) {
 			
 			[# 
@@ -118,7 +127,7 @@ QActor serviceaccessgui context ctxcoldstorageservice {
 				var Load = payloadArg(1)
 			#]
 			
-			println("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
+			println("$name store request accepted | MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ") color blue
 			
 			delay 2000
 			
@@ -154,12 +163,12 @@ QActor serviceaccessgui context ctxcoldstorageservice {
 	}
 } 
 
-
+ 
  
 // 2 - coldstorageservice
 QActor coldstorageservice context ctxcoldstorageservice {
 	
-	
+	 
 	[# 
 		val list = mutableListOf<Triple<Int, Float, Long>>() 
 		
@@ -167,10 +176,10 @@ QActor coldstorageservice context ctxcoldstorageservice {
 		var TICKETTIME = 15
 		var CurrentLoad = 0f
 		var TicketNumber = 1	
-	#] 
+	#]  
   
 	State s0 initial {
-		delay 1000  // Allow time for other actors to initialize
+		delay 4000  // Allow time for other actors to initialize
 		observeResource trolley msgid statustrolley
 		println("$name OBSERVING RESOURCE statustrolley FROM trolley") color red
 		
@@ -187,6 +196,10 @@ QActor coldstorageservice context ctxcoldstorageservice {
 					whenRequest ticketrequest -> handleticket
 					whenMsg statustrolley -> handletrolley
 					
+					// stop/resume trolley
+					whenMsg stoptrolley -> handlestop
+					whenMsg resumetrolley -> handleresume
+					
 				 
 	// handle the first request			
 	State handlestore {
@@ -196,7 +209,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 				var LoadToStore = payloadArg(0).toFloat() 
 				var FreeSpace = MAXW - CurrentLoad 
 			#]
-			println("$name received request to store $LoadToStore kg") color green
+			println("$name received first request to store $LoadToStore kg") color green
 			
 			if [# LoadToStore <= FreeSpace #] {
 				
@@ -240,6 +253,8 @@ QActor coldstorageservice context ctxcoldstorageservice {
 				println("$name accepting ticket n. $Ticket ($Load kg)") color green
 				println("$name sending request to trolley...") color green
 				
+				delay 1000
+				println("$name | SENDING gotakecharge to trolley - Ticket: $Ticket") color green
 				forward trolley -m gotakecharge : gotakecharge( $Ticket, $Load )
 				//replyTo ticketrequest with chargetaken : chargetaken( $TicketNumber )
 				
@@ -260,6 +275,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	}
 	Goto waitrequest
 	
+	// handle trolley
 	State handletrolley {
 		onMsg( statustrolley  : statustrolley ( X, Y ) ) {
 			[# 
@@ -286,6 +302,30 @@ QActor coldstorageservice context ctxcoldstorageservice {
 	}
 	Goto waitrequest
 	
+	// stop
+	State handlestop {
+		onMsg( stoptrolley : stoptrolley( X ) ) {
+			println("$name - stopping the trolley...") color red
+			
+			forward trolley -m stoptrolley : stoptrolley( X )
+			delay 100
+			//emit alarm : alarm( X )
+		} 
+	}  
+	Goto waitrequest
+	
+	// resume 
+	State handleresume {
+		onMsg( resumetrolley : resumetrolley( X ) ) {
+			println("$name - resuming the trolley...") color green
+			
+			forward trolley -m resumetrolley : resumetrolley( X )
+		}
+	}
+	Goto waitrequest
+	
+	
+	
 	// timeout?
 	State endwork {
 		println("$name END WORK.")
@@ -298,14 +338,18 @@ QActor coldstorageservice context ctxcoldstorageservice {
 // 3 - trolley
 QActor trolley context ctxcoldstorageservice {
 	[#
-		var Status = "init"
+		var CurrentStatus = "init"
+		var OldStatus = "init"
 		var Ticket = 0
 		var Load = 0f
+		
+		var stopped : Boolean = false
 	#]
 	
+	// init
 	State s0 initial {
-		updateResource [# "statustrolley( $Ticket, $Status )" #]  // Ensure the resource exists
-		println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #]  // Ensure the resource exists
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 		
 		printCurrentMessage
 		println("$name START ") color magenta
@@ -317,15 +361,38 @@ QActor trolley context ctxcoldstorageservice {
 	
 	// wait for a request
 	State waitrequest {
-		forward basicrobot -m setrobotstate : setpos(0,0,down)
-		println("$name waiting for requests...") color magenta
 		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+		 
+		[# 
+			OldStatus = CurrentStatus // salva stato precedente
+			CurrentStatus = "waitrequest" 
+		#]
+		 
+		
+		forward basicrobot -m setrobotstate : setpos(0,0,down)
+		println("$name | waiting for requests...") color magenta
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	}  
 	Transition t0 whenMsg gotakecharge -> gotoindoor
+					whenMsg stoptrolley -> stoptrolley
 	
 	// go to indoot
 	State gotoindoor { 
-		println("$name moving to INDOOR") color magenta
+		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+		
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "gotoindoor" 
+		#]
+		
+		println("$name gotakecharge received -> moving to INDOOR") color magenta
 		
 		onMsg( gotakecharge : gotakecharge( TICKET, LOAD ) ){
 			
@@ -334,71 +401,172 @@ QActor trolley context ctxcoldstorageservice {
 				Load = payloadArg(1).toFloat() 
 			#]		
 			println("$name taking charge - ticket n. $Ticket, $Load kg ") color magenta
-			//replyTo gotakecharge with chargetaken : chargetaken( $Ticket )
-			//updateResource			
+			//replyTo gotakecharge with chargetaken : chargetaken( $Ticket )			
       	}      	
 		delay 500 // simulate the movement
 		request basicrobot -m moverobot : moverobot (0,4) //(0,4) position of INDOOR
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	}
 	Transition t0 whenReply moverobotdone -> takeload
 					whenReply moverobotfailed -> failed
+					whenMsg stoptrolley -> stoptrolley
 	
 	// take the load 
 	State takeload {
-		[# Status = "takeload" #]
+		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+		
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "takeload" 
+		#]
+		
 		println("$name taking the load...") color magenta
 		
-		//[# CommUtils.waitTheUser("$name HIT to terminate load") #] //simulate the command 
-		delay 500
-		updateResource [# "statustrolley( $Ticket, $Status )" #]  
-		println("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )") color red
+	
+		delay 2000
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	} 
-	Goto gotocoldroom
+	Transition t0 whenTime 50 -> gotocoldroom
+					whenMsg stoptrolley -> stoptrolley
 	
 	// go to cold room
 	State gotocoldroom {
 		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+		
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "gotocoldroom" 
+			
+		#]
+		
 		println("$name moving to COLDROOM") color magenta
 		request basicrobot -m moverobot: moverobot(4,3)
 		delay 5000 // simulate the movement
+		
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	}
 	Transition t0 whenReply moverobotdone -> storeload
 			 			whenReply moverobotfailed -> failed
+			 			whenMsg stoptrolley -> stoptrolley
 	
 	// store the load
 	State storeload {
 		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+		
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "storeload" 
+		#]
+		
 		println("$name storing the load...") color magenta
 		delay 500
 		// waits for requests
+		
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	} 
 	Transition t0 whenTime 2000 -> gohome
 		 			whenMsg gotakecharge -> gotoindoor
+		 			whenMsg stoptrolley -> stoptrolley
 	 
 	// go home
 	State gohome{
 		
+		if [# stopped #] {
+			[# stopped = false #]
+		}
+				
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "gohome" 
+		#]
+		
 		println("$name going HOME...") color magenta
 		request basicrobot -m moverobot: moverobot (0 ,0)
 		delay 2000 // simulate the movement 
+		
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		//println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
 	}
 	Transition t0 whenReply moverobotdone -> trolleyathome
 						whenReply moverobotfailed -> failed
+						whenMsg stoptrolley -> stoptrolley
 	
 	// at home
 	State trolleyathome {
+		
+		[# 
+			OldStatus = CurrentStatus
+			CurrentStatus = "trolleyathome" 
+		#]
+		
 		forward basicrobot -m setdirection : dir(down)
-		println("$name trolley at home") color magenta
+		println("$name | trolley at home") color magenta
+		
+		updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+		println("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )") color red
+		 
+	}
+	Goto exitsystem
+		
+	// ---------------------------------------------------------------------
+	// stop trolley
+	State stoptrolley {  
+		
+		onMsg( stoptrolley : stoptrolley( X ) ) {			
+			
+			[#  
+				stopped = true
+				OldStatus = CurrentStatus
+				CurrentStatus = "stopped" 
+			#]
+			println("$name | STOP TROLLEY... previous state was $OldStatus, current state is $CurrentStatus") color red
+			emit alarm : alarm( X )
+			println("$name | ALARM: STOP BASIC ROBOT... ") color red
+			
+			updateResource [# "statustrolley( $Ticket, $CurrentStatus )" #] 
+			//println("$name UPDATED RESOURCE statustrolley( $Ticket, current status: $CurrentStatus )") color red
+		}
+			
+	}
+	Transition t0 whenMsg resumetrolley and [# OldStatus == "waitrequest" #] -> waitrequest
+	                whenMsg resumetrolley and [# OldStatus == "gotoindoor" #] -> gotoindoor
+	                whenMsg resumetrolley and [# OldStatus == "takeload" #] -> takeload
+	                whenMsg resumetrolley and [# OldStatus == "gotocoldroom" #] -> gotocoldroom
+	                whenMsg resumetrolley and [# OldStatus == "storeload" #] -> storeload
+	                whenMsg resumetrolley and [# OldStatus == "gohome" #] -> gohome
+	                whenMsg resumetrolley -> waitrequest // fallback
+	
+
+	
+	//failed 
+	State failed {
+		println("$name | $CurrentStatus failed...") color magenta
+		forward trolley -m tryagain : tryagain( retry )
+	}
+	Transition t0 whenMsg tryagain and [# CurrentStatus == "gotoindoor" #] -> gotoindoor
+					whenMsg tryagain and [# CurrentStatus == "gotocoldroom" #] -> gotocoldroom
+					whenMsg tryagain and [# CurrentStatus == "gohome" #] -> gohome
+					whenMsg tryagain -> waitrequest
+	
+	
+	State exitsystem {
 		forward basicrobot -m disengage : disengage(trolley)
 		
 		println("$name  disengaged") color magenta
 		delay 1000 //avoid to premature abort of connection
 		[# System.exit(0) #]
 	}
-	 
-	//failed
-	State failed {
-		println("$name action failed") color magenta
-	}
-	Goto gohome
 }

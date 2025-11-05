@@ -22,15 +22,17 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
 		
-				var Status = "init"
+				var CurrentStatus = "init"
+				var OldStatus = "init"
 				var Ticket = 0
 				var Load = 0f
+				
+				var stopped : Boolean = false
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						updateResourceRep( "statustrolley( $Ticket, $Status )"  
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
 						)
-						CommUtils.outred("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )")
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
 						 	   
 						CommUtils.outmagenta("$name START ")
@@ -41,22 +43,37 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t07",targetState="waitrequest",cond=whenReply("engagedone"))
+					 transition(edgeName="t09",targetState="waitrequest",cond=whenReply("engagedone"))
 				}	 
 				state("waitrequest") { //this:State
 					action { //it:State
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus // salva stato precedente
+									CurrentStatus = "waitrequest" 
 						forward("setrobotstate", "setpos(0,0,down)" ,"basicrobot" ) 
-						CommUtils.outmagenta("$name waiting for requests...")
+						CommUtils.outmagenta("$name | waiting for requests...")
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t08",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					 transition(edgeName="t010",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					transition(edgeName="t011",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("gotoindoor") { //this:State
 					action { //it:State
-						CommUtils.outmagenta("$name moving to INDOOR")
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "gotoindoor" 
+						CommUtils.outmagenta("$name gotakecharge received -> moving to INDOOR")
 						if( checkMsgContent( Term.createTerm("gotakecharge(X,Y)"), Term.createTerm("gotakecharge(TICKET,LOAD)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
@@ -66,46 +83,74 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						}
 						delay(500) 
 						request("moverobot", "moverobot(0,4)" ,"basicrobot" )  
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t09",targetState="takeload",cond=whenReply("moverobotdone"))
-					transition(edgeName="t010",targetState="failed",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t012",targetState="takeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t013",targetState="failed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t014",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("takeload") { //this:State
 					action { //it:State
-						 Status = "takeload"  
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "takeload" 
 						CommUtils.outmagenta("$name taking the load...")
-						delay(500) 
-						updateResourceRep( "statustrolley( $Ticket, $Status )"  
+						delay(2000) 
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
 						)
-						CommUtils.outred("$name UPDATED RESOURCE statustrolley( $Ticket, $Status )")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
+				 	 		stateTimer = TimerActor("timer_takeload", 
+				 	 					  scope, context!!, "local_tout_"+name+"_takeload", 50.toLong() )  //OCT2023
 					}	 	 
-					 transition( edgeName="goto",targetState="gotocoldroom", cond=doswitch() )
+					 transition(edgeName="t015",targetState="gotocoldroom",cond=whenTimeout("local_tout_"+name+"_takeload"))   
+					transition(edgeName="t016",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("gotocoldroom") { //this:State
 					action { //it:State
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "gotocoldroom" 
+									
 						CommUtils.outmagenta("$name moving to COLDROOM")
 						request("moverobot", "moverobot(4,3)" ,"basicrobot" )  
 						delay(5000) 
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t011",targetState="storeload",cond=whenReply("moverobotdone"))
-					transition(edgeName="t012",targetState="failed",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t017",targetState="storeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t018",targetState="failed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t019",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("storeload") { //this:State
 					action { //it:State
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "storeload" 
 						CommUtils.outmagenta("$name storing the load...")
 						delay(500) 
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -113,26 +158,101 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_storeload", 
 				 	 					  scope, context!!, "local_tout_"+name+"_storeload", 2000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t013",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
-					transition(edgeName="t014",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					 transition(edgeName="t020",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
+					transition(edgeName="t021",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					transition(edgeName="t022",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("gohome") { //this:State
 					action { //it:State
+						if(  stopped  
+						 ){ stopped = false  
+						}
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "gohome" 
 						CommUtils.outmagenta("$name going HOME...")
 						request("moverobot", "moverobot(0,0)" ,"basicrobot" )  
 						delay(2000) 
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t015",targetState="trolleyathome",cond=whenReply("moverobotdone"))
-					transition(edgeName="t016",targetState="failed",cond=whenReply("moverobotfailed"))
+					 transition(edgeName="t023",targetState="trolleyathome",cond=whenReply("moverobotdone"))
+					transition(edgeName="t024",targetState="failed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t025",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("trolleyathome") { //this:State
 					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "trolleyathome" 
 						forward("setdirection", "dir(down)" ,"basicrobot" ) 
-						CommUtils.outmagenta("$name trolley at home")
+						CommUtils.outmagenta("$name | trolley at home")
+						updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+						)
+						CommUtils.outred("$name UPDATED RESOURCE statustrolley( $Ticket, $CurrentStatus )")
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="exitsystem", cond=doswitch() )
+				}	 
+				state("stoptrolley") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("stoptrolley(X)"), Term.createTerm("stoptrolley(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								  
+												stopped = true
+												OldStatus = CurrentStatus
+												CurrentStatus = "stopped" 
+								CommUtils.outred("$name | STOP TROLLEY... previous state was $OldStatus, current state is $CurrentStatus")
+								emit("alarm", "alarm(X)" ) 
+								CommUtils.outred("$name | ALARM: STOP BASIC ROBOT... ")
+								updateResourceRep( "statustrolley( $Ticket, $CurrentStatus )"  
+								)
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t026",targetState="waitrequest",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "waitrequest"  
+					}))
+					transition(edgeName="t027",targetState="gotoindoor",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotoindoor"  
+					}))
+					transition(edgeName="t028",targetState="takeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "takeload"  
+					}))
+					transition(edgeName="t029",targetState="gotocoldroom",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotocoldroom"  
+					}))
+					transition(edgeName="t030",targetState="storeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "storeload"  
+					}))
+					transition(edgeName="t031",targetState="gohome",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gohome"  
+					}))
+					transition(edgeName="t032",targetState="waitrequest",cond=whenDispatch("resumetrolley"))
+				}	 
+				state("failed") { //this:State
+					action { //it:State
+						CommUtils.outmagenta("$name | $CurrentStatus failed...")
+						forward("tryagain", "tryagain(retry)" ,"trolley" ) 
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t033",targetState="gotoindoor",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotoindoor"  
+					}))
+					transition(edgeName="t034",targetState="gotocoldroom",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotocoldroom"  
+					}))
+					transition(edgeName="t035",targetState="gohome",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gohome"  
+					}))
+					transition(edgeName="t036",targetState="waitrequest",cond=whenDispatch("tryagain"))
+				}	 
+				state("exitsystem") { //this:State
+					action { //it:State
 						forward("disengage", "disengage(trolley)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name  disengaged")
 						delay(1000) 
@@ -142,16 +262,6 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-				}	 
-				state("failed") { //this:State
-					action { //it:State
-						CommUtils.outmagenta("$name action failed")
-						//genTimer( actor, state )
-					}
-					//After Lenzi Aug2002
-					sysaction { //it:State
-					}	 	 
-					 transition( edgeName="goto",targetState="gohome", cond=doswitch() )
 				}	 
 			}
 		}

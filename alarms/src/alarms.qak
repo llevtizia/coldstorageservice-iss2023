@@ -1,0 +1,109 @@
+System alarms
+
+// Messaggi  --------------------------------------------------------------------
+Event distance    : distance( D )		//emitted  by sonardevice  
+
+Event obstacle  		: obstacle( X )		//emitted by sonarSimulator
+Event free				: free( X )			//emitted by sonarSimulator
+
+Dispatch stoptrolley	: stoptrolley( X )
+Dispatch resumetrolley	: resumetrolley( X )
+Dispatch info			: info ( X, Y )
+// ------------------------------------------------------------------------------
+Dispatch sonarstart	: sonarstart( X )
+Dispatch sonarstop	: sonarstop( X )
+  
+
+// -------------------------------------------------------------------------------
+
+
+Context ctxcoldstorageservice ip [host="127.0.0.1" port=8015] 
+Context ctxalarms             ip [host="localhost" port=8025]
+
+ExternalQActor coldstorageservice context ctxcoldstorageservice
+ExternalQActor trolley context ctxcoldstorageservice
+
+ 
+
+CodedQActor sonar  context ctxalarms className "sonarSimulator"           //IN LOCALE
+//CodedQActor sonar  context ctxalarms className "sonarHCSR04Support23"   //SU RASP
+
+
+
+QActor alarmdevice context  ctxalarms { //sonar 
+
+	[#	
+		val MINT = 5									//seconds to wait from one stop to the next
+		var stopped: Boolean = false 					//true if the robot is stopped
+		var lastStopped = System.currentTimeMillis()	//when the robot got stopped the last time
+	#]
+
+	State s0 initial {
+		println("$name - START") color cyan
+		[# subscribeToLocalActor("sonar") #]
+		
+		// AVVIA IL SONAR
+    	delay 1000  // Aspetta un attimo che tutto sia pronto
+    	forward sonar -m sonarstart : sonarstart(start)
+    
+	}
+	Goto work
+	
+	State work { 
+		//println("$name - waiting...") color cyan
+	}
+	Transition t0 whenEvent obstacle -> handleobstacle
+					whenEvent free -> handlefree
+					whenEvent distance -> handledistance
+					 
+					 
+	State handleobstacle {
+		 onMsg( obstacle : obstacle( X ) ) {
+		 	[# val elapsedTime = ( System.currentTimeMillis() - lastStopped ) / 1000 #] 
+		 	
+		 	// non è già fermo ed è passato abbastanza tempo
+		 	if [# !stopped && elapsedTime > MINT #] {
+		 		println("$name | STOP! Distance: ${payloadArg(0)}...") color red
+				forward coldstorageservice -m stoptrolley : stoptrolley( stop )
+		 		[#
+		 			stopped = true
+		 			lastStopped = System.currentTimeMillis()
+		 		#] 
+		 	}
+		 	println("$name | stopped: ${stopped}, last stopped: ${lastStopped}") color red
+		 	//updateResource [# "alarmdevice(stop)" #]
+		 }
+	}
+	Goto work  
+	
+	State handlefree {
+		onMsg( free : free( X ) ) {
+			if [# stopped #] {
+				// riparte
+				[# stopped = false #]
+				println("$name | RESUME! Distance: ${payloadArg(0)}... ") color green
+				forward coldstorageservice -m resumetrolley : resumetrolley( resume )
+				//updateResource [# "alarmdevice(resume)" #]
+			}
+			 
+		}
+	}
+	Goto work
+	
+	State handledistance {
+		onMsg( distance : distance( X ) ) {
+			println("$name - distance: ${payloadArg(0)}... the sonar works!") color cyan
+		}
+	}
+	Goto work
+} 
+  
+/* 
+QActor warningdevice context ctxalarms { //led
+	State s0 initial {
+		println("$name - START") color green
+	}
+}
+* */
+
+

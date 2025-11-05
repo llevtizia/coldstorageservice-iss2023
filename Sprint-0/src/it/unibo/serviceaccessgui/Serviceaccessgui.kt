@@ -32,13 +32,13 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition( edgeName="goto",targetState="sendstore", cond=doswitch() )
+					 transition( edgeName="goto",targetState="sendrequest", cond=doswitch() )
 				}	 
-				state("sendstore") { //this:State
+				state("sendrequest") { //this:State
 					action { //it:State
-						 var CurrentWeight = ( Math.round( Math.random() * 100 ) )   
-						CommUtils.outblue("$name SEND REQUEST kg $CurrentWeight")
-						request("storerequest", "storerequest($CurrentWeight)" ,"coldstorageservice" )  
+						 var Load = 50   
+						CommUtils.outblue("$name SEND REQUEST: $Load kg")
+						request("storerequest", "storerequest($Load)" ,"coldstorageservice" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -49,16 +49,13 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 				}	 
 				state("sendticket") { //this:State
 					action { //it:State
-						delay(1000) 
-						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET,KG)"), Term.createTerm("storeaccepted(TICKET,KG)"), 
+						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET)"), Term.createTerm("storeaccepted(TICKET)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 
-												var TicketNumber = payloadArg(0)
-												var Load = payloadArg(1)
-								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ")
-								delay(2000) 
-								CommUtils.outblue("$name SENDING TICKET: $TicketNumber")
-								request("ticketrequest", "ticketrequest($TicketNumber)" ,"coldstorageservice" )  
+								 var Ticket = "${payloadArg(0)}"  
+								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $Ticket")
+								delay(3000) 
+								CommUtils.outblue("$name SENDING TICKET: $Ticket")
+								request("ticketrequest", "ticketrequest($Ticket)" ,"coldstorageservice" )  
 						}
 						//genTimer( actor, state )
 					}
@@ -66,24 +63,21 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 					sysaction { //it:State
 					}	 	 
 					 transition(edgeName="t02",targetState="endwork",cond=whenReply("chargetaken"))
-					transition(edgeName="t03",targetState="endwork",cond=whenReply("ticketrefused"))
+					transition(edgeName="t03",targetState="endwork",cond=whenReply("chargerefused"))
 				}	 
 				state("endwork") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("storerefused(X)"), Term.createTerm("storerefused(X)"), 
+						if( checkMsgContent( Term.createTerm("storerefused(KG)"), Term.createTerm("storerefused(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var Load = payloadArg(0)  
-								CommUtils.outblue("$name - request of $Load kg refused. Not enough free space...")
+								CommUtils.outblue("$name store refused. END WORK")
 						}
-						if( checkMsgContent( Term.createTerm("ticketrefused(TICKET)"), Term.createTerm("ticketrefused(X)"), 
+						if( checkMsgContent( Term.createTerm("chargetaken(TICKET)"), Term.createTerm("chargetaken(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var TicketNumber = payloadArg(0)  
-								CommUtils.outblue("$name - request n. $TicketNumber refused. Too much time has passed...")
+								CommUtils.outblue("$name charge taken. END WORK")
 						}
-						if( checkMsgContent( Term.createTerm("chargetaken(TICKET)"), Term.createTerm("chargetaken(X)"), 
+						if( checkMsgContent( Term.createTerm("chargerefused(TICKET)"), Term.createTerm("chargerefused(TIME)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								 var TicketNumber = payloadArg(0)  
-								CommUtils.outblue("$name - request n. $TicketNumber accepted. All requests sent!")
+								CommUtils.outblue("$name charge refused. END WORK")
 						}
 						//genTimer( actor, state )
 					}

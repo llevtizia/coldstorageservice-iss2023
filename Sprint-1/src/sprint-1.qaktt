@@ -6,7 +6,7 @@ Reply   engagedone    : engagedone(ARG)    for engage
 Reply   engagerefused : engagerefused(ARG) for engage
 
 Dispatch disengage    : disengage(ARG) 
- 
+  
 //robotpos
 Request moverobot    :  moverobot(TARGETX, TARGETY)  
 Reply moverobotdone  :  moverobotok(ARG)                    for moverobot
@@ -14,7 +14,7 @@ Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Dispatch setrobotstate	: setpos(X,Y,D) 
 Dispatch setdirection : dir( D )  //D =up|down!left|right
-
+ 
 // ------------------------------------------------------------------------------
 
 // Messaggi dell'applicazione ---------------------------------------------------
