@@ -73,6 +73,11 @@ public class TestCoapObservation implements CoapHandler {
             IApplMessage ticketReply = conn.request(ticketRequest);
             System.out.println("Risposta ticket: " + ticketReply);
             
+            Assert.assertEquals("chargetaken", ticketReply.msgId());
+            System.out.println("chargetaken received");
+            
+            
+            
             
             // 4 - attesa
             CommUtils.delay(12000); 

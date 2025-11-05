@@ -740,100 +740,87 @@
                 <li>
                     <a href="sprint-1/sprint-1-test.qaktt">Link modello <ks>coldstorageservice</ks> per test</a>
                 </li>
-                <li>
-                    <a href="sprint-1/ColdStorageServiceTestSprint1.java">Link test unit</a>
-                </li>
             </ul>
-
             <p>
-                <h4><ks>storeRequestTest()</ks></h4>
-                <pre>
-                    public class ColdStorageServiceTestSprint1 {
-	
-                        public static final String ADDR		= "localhost";
-                        public static final int PORT		= 8015;
-                        public static final String MSG		= "msg( storerequest, request, serviceaccessgui, coldstorageservice, storerequest(5), 5 )";
-                        public static final String REPLY	= "storeaccepted";
-                        
-                        @Test
-                        public void storeRequestTest() {
-                            
-                            
-                            try (
-                                    Socket client = new Socket(ADDR, PORT);
-                                    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                                    BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
-                                
-                            ){
-                    
-                                    // send store request
-                                    out.write(MSG);
-                                    out.newLine(); // ensure the message ends properly
-                                    out.flush();
-                                    
-                                    //wait for response
-                                    String response = in.readLine();
-                                    assertNotNull("The response is null", response);
-                                    assertTrue("The response doesn't contain 'storeaccepted'", response.contains(REPLY) );
-                                            
-                            } catch (IOException e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                            }	
-                        }
-                </pre>
-                Test sul funzionamento del sistema: viene inviata la richiesta di depositare un numero di KG inferiore a 
-                <b>MAXW</b> e si verifica che la richiesta venga accettata.
+                <h4><ks>
+                    <a href="../src/test/TestColdStorageService.java">TestColdStorageService (click to view)</a>
+                </ks></h4>
+                
+                Test sul funzionamento del sistema:
+                <br><br>
+                <ul>
+                    <li>
+                        viene creata una connessione <b>TCP</b> al contesto <ks>coldstorageservice</ks> sulla porta <ks>8015</ks>
+                    </li>
+                    <li>
+                        <highlight><b>testStoreRequestAccepted():</b></highlight> viene inviata una <i>storerequest</i> con carico minore 
+                        di <b>MAXW</b> e si verifica che la risposta sia <code>storeaccepted</code>
+                    </li>
+                    <li>
+                        <highlight><b>testStoreRequestRefused():</b></highlight> viene inviata una <i>storerequest</i> con carico maggiore 
+                        di <b>MAXW</b> e si verifica che la risposta sia <code>storerefused</code>
+                    </li>
+                    <li>
+                        <highlight><b>testFullExchange():</b></highlight> viene inviata prima una <i>storerequest</i> 
+                        e, dopo che viene accettata, viene estratto il numero di ticket per inviare la seconda <i>ticketrequest</i>, 
+                        verificando che il trolley carichi il carico
+                    </li>
+                </ul>
 
-                <br>
-                <h4><ks>handleTicketTest()</ks></h4>
-                <pre>
-                    @Test
-                    public void handleTicketTest() {
-                        
-                        
-                        try (
-                            Socket client = new Socket(ADDR, PORT);
-                            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()))
-                        ) {
-                            // send store request
-                            out.write(MSG);
-                            out.newLine();
-                            out.flush();
+                <h4><ks>
+                    <a href="../src/test/TestCoapObservation.java">TestCoapObservation (click to view)</a>
+                </ks></h4>
 
-                            // wait for response
-                            String response = in.readLine();
-                            assertNotNull("The response is null ", response);
-                            assertTrue("The response doesn't contain 'storeaccepted' ", response.contains(REPLY));
+                Ogni attore Qak è anche una risorsa CoAP osservabile. La <k>test class</k> può agire da <b>observer CoAP</b> 
+                conoscendo <i>host address</i>, <i>port</i>, <i>context</i>, <i>actor</i>: in questo caso 
+                <code>coap://localhost:8015/ctxcoldstorageservice/trolley</code> per poter monitorare i cambiamenti di stato 
+                del trolley.
 
-                            // extract ticket number 
-                            String ticketNumber = response.replaceAll("[^0-9]+", " ").trim().split(" ")[0]; 
-                            System.out.println("Extracted ticket number: " + ticketNumber);
+                <br><br>
+                <ul>
+                    <li>
+                        La classe implementa l'interfaccia <b>CoapHandler</b> che definisce due metodi:
+                        <ul>
+                            <li>
+                                <b><highlight>onLoad( CoapResponse response ):</highlight></b> ad ogni <i>updateResource</i> del trolley, inserisce il messaggio 
+                                ricevuto nella lista <i><k>observedMessages</k></i>
+                            </li>
+                            <li>
+                                <b><highlight>onError( ):</highlight></b> gestisce i casi di errore
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        viene creata una connessione <b>TCP</b> al contesto <ks>coldstorageservice</ks> sulla porta <ks>8015</ks>
+                    </li>
+                    <li>
+                        vengono inviate una <i>storerequest</i> e, una volta ricevuta la risposta <code>storeaccepted</code>, 
+                        una <i>ticketrequest</i>
+                    </li>
+                    <li>
+                        si verifica che siano state ricevute delle osservazioni e vengono stampate a video
+                    </li>
+                </ul>
+                
+                
+                <h4><ks>
+                    <a href="../src/test/TestRobot.java">TestRobot (click to view)</a>
+                </ks></h4>
 
-                            // Wait before sending the second request
-                            Thread.sleep(3000); // Or use TimeUnit.MILLISECONDS.sleep(1000);
-
-                            // Send second request using the ticket
-                            String ticketRequest = "msg( ticketrequest, request, serviceaccessgui, coldstorageservice, ticketrequest(" + ticketNumber + "), 6 )";
-                            out.write(ticketRequest);
-                            out.newLine();
-                            out.flush();
-
-                            // Wait for response
-                            String ticketResponse = in.readLine();
-                            assertNotNull("The response to the ticket is null ", ticketResponse);
-                            assertTrue("The ticket is expired... ", 
-                                    ticketResponse.contains("chargetaken"));
-
-                        } catch (IOException | InterruptedException e) {
-                            e.printStackTrace();
-                            fail("Exception thrown during test execution: " + e.getMessage());
-                        }
-                    }
-                </pre>
-                Test sulla gestione della seconda richiesta: dopo aver ricevuto il ticket, viene inviata una 
-                seconda richiesta al sistema prima dello scadere del <b>TICKETTIME</b> e il ticket risulta valido.
+                Test per verificare il movimento del <b>basicrobot</b>:
+                <br><br>
+                <ul>
+                    <li>
+                        viene creata una connessione <b>TCP</b> diretta al <ks>basic robot</ks> sulla porta <ks>8020</ks>
+                    </li>
+                    <li>
+                        <highlight><b>engage:</b></highlight> prenotazione per uso esclusivo con comando <code>engage(owner, steptime)</code>
+                    </li>
+                    <li>
+                        <highlight><b>movimento di test:</b></highlight> invio comando <code>moverobot(X,Y)</code> per verificare 
+                        la risposta del robot (<code>moverobotdone</code>)
+                    </li>
+                </ul>
             </p>
         </div>
         

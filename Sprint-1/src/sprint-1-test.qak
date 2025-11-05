@@ -13,7 +13,7 @@ Reply moverobotdone  :  moverobotok(ARG)                    for moverobot
 Reply moverobotfailed:  moverobotfailed(PLANDONE, PLANTODO) for moverobot
 
 Dispatch setrobotstate	: setpos(X,Y,D) 
-Dispatch setdirection : dir( D )  //D =up|down!left|right
+Dispatch setdirection : dir( D )  //D =up|down!left|right 
  
 // ------------------------------------------------------------------------------
 
@@ -252,7 +252,7 @@ QActor trolley context ctxcoldstorageservice {
 	[#
 		var Status = "init"
 		var Ticket = 0
-		var Load = 0f
+		var Load = 0f 
 	#]
 	
 	State s0 initial {
@@ -262,7 +262,7 @@ QActor trolley context ctxcoldstorageservice {
 		printCurrentMessage
 		println("$name START ") color magenta
 		println("$name engage BASIC ROBOT ") color magenta
-		request basicrobot -m engage: engage(trolley, 150)
+		request basicrobot -m engage: engage(trolley, 330)
 	} 
 	Transition t0 whenReply engagedone -> waitrequest
 	

@@ -17,8 +17,6 @@ public class TestColdStorageService {
     
     @BeforeClass // prima di tutto
     public static void setUpClass() throws Exception {
-        // avvia il sistema 
-    	// it.unibo.ctxcoldstorageservice.main();
     	
         CommUtils.delay(3000); // Attendi l'inizializzazione
         

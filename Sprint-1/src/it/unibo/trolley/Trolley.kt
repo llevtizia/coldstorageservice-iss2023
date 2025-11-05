@@ -24,7 +24,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 		
 				var Status = "init"
 				var Ticket = 0
-				var Load = 0f
+				var Load = 0f 
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -35,7 +35,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						 	   
 						CommUtils.outmagenta("$name START ")
 						CommUtils.outmagenta("$name engage BASIC ROBOT ")
-						request("engage", "engage(trolley,150)" ,"basicrobot" )  
+						request("engage", "engage(trolley,330)" ,"basicrobot" )  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
