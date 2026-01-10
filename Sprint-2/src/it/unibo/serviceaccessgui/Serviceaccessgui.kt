@@ -25,7 +25,7 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						delay(1500) 
+						delay(4000) 
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
 						 	   
 						CommUtils.outblue("$name START ")
@@ -51,13 +51,13 @@ class Serviceaccessgui ( name: String, scope: CoroutineScope, isconfined: Boolea
 				}	 
 				state("sendticket") { //this:State
 					action { //it:State
-						delay(1000) 
+						delay(2000) 
 						if( checkMsgContent( Term.createTerm("storeaccepted(TICKET,KG)"), Term.createTerm("storeaccepted(TICKET,KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
 												var TicketNumber = payloadArg(0)
 												var Load = payloadArg(1)
-								CommUtils.outblue("$name MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ")
+								CommUtils.outblue("$name store request accepted | MOVING TO INDOOR --> ticket: $TicketNumber, $Load kg ")
 								delay(2000) 
 								CommUtils.outblue("$name SENDING TICKET: $TicketNumber")
 								request("ticketrequest", "ticketrequest($TicketNumber)" ,"coldstorageservice" )  

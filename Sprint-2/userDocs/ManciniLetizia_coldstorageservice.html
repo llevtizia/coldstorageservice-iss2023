@@ -54,6 +54,9 @@
                         <li>è <b>acceso</b> quando il trolley è fermo</li>
                     </ul>
                 </li>
+                <li>
+                    Mentre il trolley è in movimento, i requisiti di allarme devono essere rispettati. Il trolley non si fermerà solo nel caso in cui un prefissato intervallo di <b>MINT</b> secondi non sia passato dallo stop precedente.
+                </li>
             </ul>
             
         </div>
@@ -78,8 +81,19 @@
             </ol>
 
             <p>
-                    Sia il <ks>Sonar</ks> che il <ks>Led</ks> sono connessi ad un Raspberry Pi e lavorano indipendentemente dal resto del sistema, comunicando con il servizio per poter stoppare e riavviare il trolley. 
-                    La scelta più efficiente è quindi mantenere la rappresentazione ad attori: l'entità che costituisce gli allarmi sarà rappresentata come un componente ad attori su un <b>contesto diverso</b> (<i><highlight>ctxalarms</highlight></i>) comunicante attraverso scambio di messaggi.
+                Sia il <ks>Sonar</ks> che il <ks>Led</ks> sono connessi ad un Raspberry Pi e lavorano indipendentemente dal resto del sistema, comunicando con il servizio per poter stoppare e riavviare il trolley. 
+                La scelta più efficiente è quindi mantenere la rappresentazione ad attori: l'entità che costituisce gli allarmi sarà rappresentata come un componente ad attori su un <b>contesto diverso</b> (<i><highlight>ctxalarms</highlight></i>) comunicante attraverso scambio di messaggi.
+            </p>
+            <p>
+                Il sistema avrà due contesti diversi:
+                <ul>
+                    <li>
+                        <code>ctxcoldstorageservice</code> <i>(porta 8015)</i>: contiene il <ks>servizio principale</ks>, l'<ks>interfaccia</ks> che simula le interazioni utente e il <ks>trolley</ks>
+                    </li>
+                    <li>
+                        <code>ctxalarms</code> <i>(porta 8025)</i>: contiene <ks>sonar</ks>, <ks>LED</ks> e gli attori necessari per elaborare la logica di sistema, <ks>alarmdevice</ks> e <ks>warningdevice</ks>
+                    </li>
+                </ul>
             </p>
 
             <h4 id="alarm device">1 - ALARM DEVICE</h4>
@@ -116,6 +130,9 @@
                                 <em><a href="html/QakActors24.html#attori-coded">CodedQActor</a></em></li>
                         </ul> 
                     </p>
+                    <p>
+                        Al sonar, sulla base del <a href="html/Principi.html#id1">principio di singola responsabilità</a>, si affianca l'attore <ks>alarmdevice</ks> per elaborare i dati generati (verifica MINT, gestisce stop/resume).
+                    </p>
                 </p>
             </p>
 
@@ -128,7 +145,7 @@
                     <li><ks>ON</ks> quando il trolley è <i>stopped</i></li>
                 </ul>
 
-                Il componente può ugualmente essere rappresentato come un attore nello stesso contesto <i>ctxalarms</i> dell'alarmdevice. 
+                Allo stesso modo, lo stato del LED viene sincronizzato da un secondo attore <ks>warningdevice</ks> che osserva i cambiamenti di stato del trolley.
             </p>
             <p>
                 Il committente fornisce inoltre una serie di funzioni Python <a href="html/code/sonarAndLed.py">SonarAndLed.py</a> per la gestione delle operazioni e la configurazione dei dispositivi.
@@ -146,21 +163,42 @@
                 Nella fase iniziale di sviluppo, si è scelto di <b>simulare</b> i dispositivi fisici per facilitare la realizzazione di un primo prototipo funzionante dell'applicazione.
             </p>
             <p>
-                <h4>Sonar Simulator</h4>
+                <h4>Alarm Device</h4>
                 <p>
-                    Per il sonar, è stato definito un <hightlight>sonar simulato</hightlight> implementato dalla classe <a href="../../alarms/src/kotlin/sonarSimulator.kt">sonarSimulator.kt</a> 
+                    Per il sonar, è stato definito un <hightlight>sonar simulato</hightlight> implementato dalla classe <a href="../../alarms/src/kotlin/sonarSimulator.kt">sonarSimulator.kt</a> che svolgerà il ruolo di <i>CodedQActor</i>
                     <ul>
                         <li>
                             Il sonar viene definito come un <i><k>attore streamer</k></i>, in grado di emettere eventi localmente usando la funzione <ks><highlight><a href="html/QakActors24.html#operazioni-relative-agli-eventi">emitLocalStreamEvent</a></highlight></ks>: gli attori interessati a ricevere gli eventi emessi si registreranno con la primitiva <ks><highlight><a href="html/QakActors24.html#operazioni-di-messaggista-publisch-subscribe">subscribeTo</a></highlight></ks>
                         </li>
                         <li>
-                            Vengono generati valori <i>distance</i> prevedibili che oscillano tra <b>0</b> e <b>80</b>, (aumentando e diminuendo in maniera costante di 5), simulando un ostacolo che si avvicina e allontana
+                            Vengono generati valori <i>distance</i> prevedibili che oscillano tra <b>0</b> e <b>80</b>, aumentando e diminuendo in maniera costante di 5, simulando un ostacolo che si avvicina e allontana
                         </li>
                         <li>
                             Fissato <ks>DLIMIT = 25</ks>, il sonar emette eventi <code>obstacle</code> quando la distanza misurata è minore e <code>free</code> quando il valore aumenta
                         </li>
                     </ul>
                 </p>
+                <p>
+                    L'attore <ks>alarmdevice</ks> deve:
+                    <ul>
+                        <li>
+                            registrarsi per ricevere gli eventi emessi dal sonar con <code>[# subscribeToLocalActor("sonar") #]</code>
+                        </li>
+                        <li>
+                            implementare un controllo sul tempo trascorso tra uno stop e il precedente e verificare che rispetti il vincolo su <b>MINT</b> (fissato a 5 secondi, tempo minimo tra due stop consecutivi)
+                        </li>
+                        <li>
+                            gestire gli eventi <code>obstacle</code>, <code>free</code>, <code>distance</code>
+                            <ul>
+                                <br>
+                                <li><b><highlight>obstacle</highlight></b>: se il robot non era già fermo ed è passato ababstanza tempo, viene inviato un messaggio di <k>stop</k> al <ks>coldstorageservice</ks></li>
+                                <li><b><highlight>free</highlight></b>: il robot riparte, viene inviato un messaggio di <k>resume</k> al <ks>coldstorageservice</ks></li>
+                                <li><b><highlight>distance</highlight></b>: stampo a video la distanza generata</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </p>
+
                 <h4>Led Simulator</h4>
                 <p>
                     Il LED è implementato dalla classe <a href="../../alarms/src/kotlin/ledSimulator.kt">ledSimulator.kt</a>
@@ -173,9 +211,80 @@
                         </li>                        
                     </ul>
                 </p>
+                <p>
+                    L'attore <ks>warningdevice</ks> usa l'osservabilità CoAP e il pattern <b>Observer</b>
+                    <ul>
+                        <li>
+                            tramite <code>observeResource trolley msgid statustrolley</code> si registra come <em><highlight>observer</highlight></em> dell'attore trolley e delle informazioni che emette 
+                        </li>
+                        <li>
+                            riceve automaticamente i messaggi <code>statustrolley</code> quando il trolley aggiorna lo stato
+                        </li>
+                        <li>
+                            aggiorna lo stato del LED in base allo stato del trolley
+                        </li>
+                    </ul>
+                </p>
             </p>
 
-            <h3>Architettura</h3>
+            <h3>Gestione stop/resume del trolley</h3>
+            <p>
+                Il trolley mantiene traccia del proprio stato per poter gestire correttamente <b>stop</b> e <b>resume</b>
+                <ul>
+                    <li><code>CurrentStatus</code>: stato corrente del trolley</li>
+                    <li>
+                        <code>OldStatus</code>: stato precedente allo stop, per ripartire alla ricezione di <i>resume</i>
+                    </li>
+                    <li><code>stopped</code>: flag che indica se il trolley è fermo o no</li>
+                </ul>
+            </p>
+            <h4>Stop Trolley</h4>
+            <p>
+                Il trolley può ricevere un messaggio di <k>stop</k> 
+                <ul>
+                    <li>mentre si sta <i>muovendo</i> nella stanza</li>
+                    <li>mentre è fermo compiendo azioni di <i>carico/scarico</i></li>
+                </ul>
+                Come già definito dallo <a href="../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 0</a>, il trolley usa il servizio <a href="html/BasicRobot24.html">basicrobot</a> per eseguire i comandi di spostamento del robot. Come indicato nella documentazione, la richiesta <highlight>moverobot</highlight> è gestita dal <a href="html/BasicRobot24.html#br24-componenti"><ks>robotpos</ks></a> (uno dei componenti del basicrobot) che
+                <ul>
+                    <li>usa il <k>planner</k> per determinare il piano di movimento</li>
+                    <li>esegue il piano di movimento verso la destinazione usando <ks>planexec</ks></li>
+                </ul> 
+                La sequenza di mosse può essere interrotta dall'evento <code><highlight>alarm : alarm( X )</highlight></code> → sarà quindi il trolley, dallo stato <i>stopped</i>, a emettere l'evento verso il basicrobot.
+
+                <h5>Sequenza STOP</h5>
+                <p>
+                    <ol>
+                        <li>il <ks>sonar</ks> rileva un ostacolo</li>
+                        <li><ks>alarmdevice</ks> invia <code>stoptrolley</code> al coldstorageservice</li>
+                        <li>il <ks>coldstorageservice</ks> inoltra il messaggio di <k>stop</k> al trolley</li>
+                        <li>il <ks>trolley</ks> 
+                            <ul>
+                                <li>salva <code>CurrentStatus</code> in <code>OldStatus</code></li>
+                                <li><code>CurrentStatus = "stopped"</code>, <code>stopped = true</code></li>
+                                <li>emette l'evento <code>alarm</code> per fermare il movimento fisico del basicrobot</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </p>
+
+                <h5>Sequenza RESUME</h5>
+                <p>
+                    <ol>
+                        <li>il <ks>sonar</ks> rileva l'area libera</li>
+                        <li><ks>alarmdevice</ks> invia <code>resumetrolley</code> al coldstorageservice</li>
+                        <li>il <ks>coldstorageservice</ks> inoltra il messaggio di <k>resume</k> al trolley</li>
+                        <li>il <ks>trolley</ks> 
+                            <ul>
+                                <li>recupera lo stato precedente da <code>OldStatus</code></li>
+                                <li>riprende l'esecuzione dallo stato salvato</li>
+                                <li><code>stopped = false</code></li>
+                            </ul>
+                        </li>
+                    </ol>
+                </p>
+            </p>
+            
         </div>
 
 

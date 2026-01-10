@@ -27,11 +27,14 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				var MAXW = 200	
 				var TICKETTIME = 15
 				var CurrentLoad = 0f
-				var TicketNumber = 1	
+				var TicketNumber = 1
+				
+				var CurrentStatus = "initial"
+				var OldStatus = "initial"	
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						delay(1000) 
+						delay(4000) 
 						observeResource("localhost","8015","ctxcoldstorageservice","trolley","statustrolley")
 						CommUtils.outred("$name OBSERVING RESOURCE statustrolley FROM trolley")
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
@@ -46,24 +49,32 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				}	 
 				state("waitrequest") { //this:State
 					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "waitrequest"
 						CommUtils.outgreen("$name waiting for requests... ")
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t04",targetState="handlestore",cond=whenRequest("storerequest"))
-					transition(edgeName="t05",targetState="handleticket",cond=whenRequest("ticketrequest"))
-					transition(edgeName="t06",targetState="handletrolley",cond=whenDispatch("statustrolley"))
+					 transition(edgeName="t04",targetState="handlestop",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t05",targetState="handleresume",cond=whenDispatch("resumetrolley"))
+					transition(edgeName="t06",targetState="handlestore",cond=whenRequest("storerequest"))
+					transition(edgeName="t07",targetState="handleticket",cond=whenRequest("ticketrequest"))
+					transition(edgeName="t08",targetState="handletrolley",cond=whenDispatch("statustrolley"))
 				}	 
 				state("handlestore") { //this:State
 					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "handlestore"
 						if( checkMsgContent( Term.createTerm("storerequest(KG)"), Term.createTerm("storerequest(KG)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
 												var LoadToStore = payloadArg(0).toFloat() 
 												var FreeSpace = MAXW - CurrentLoad 
-								CommUtils.outgreen("$name received request to store $LoadToStore kg")
+								CommUtils.outgreen("$name received first request to store $LoadToStore kg")
 								if(  LoadToStore <= FreeSpace  
 								 ){CommUtils.outgreen("$name accepting load of $LoadToStore kg ")
 								CommUtils.outgreen("$name generating ticket n. $TicketNumber")
@@ -90,6 +101,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				}	 
 				state("handleticket") { //this:State
 					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "handleticket"
 						if( checkMsgContent( Term.createTerm("ticketrequest(TICKET)"), Term.createTerm("ticketrequest(X)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 var Ticket = payloadArg(0).toInt()  
@@ -101,6 +115,8 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								if(  ( ElapsedTime/1000 ) < TICKETTIME  
 								 ){CommUtils.outgreen("$name accepting ticket n. $Ticket ($Load kg)")
 								CommUtils.outgreen("$name sending request to trolley...")
+								delay(1000) 
+								CommUtils.outgreen("$name | SENDING gotakecharge to trolley - Ticket: $Ticket")
 								forward("gotakecharge", "gotakecharge($Ticket,$Load)" ,"trolley" ) 
 								}
 								else
@@ -121,6 +137,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				}	 
 				state("handletrolley") { //this:State
 					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "handletrolley"
 						if( checkMsgContent( Term.createTerm("statustrolley(X,Y)"), Term.createTerm("statustrolley(X,Y)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								 
@@ -138,6 +157,38 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 													list.remove(request)
 								        			println(list) 
 								}
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handlestop") { //this:State
+					action { //it:State
+						 
+									OldStatus = CurrentStatus
+									CurrentStatus = "handlestop"
+						if( checkMsgContent( Term.createTerm("stoptrolley(X)"), Term.createTerm("stoptrolley(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outred("$name - STOP RECEIVED! Sending STOP to the trolley...")
+								forward("stoptrolley", "stoptrolley(X)" ,"trolley" ) 
+								delay(100) 
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitrequest", cond=doswitch() )
+				}	 
+				state("handleresume") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("resumetrolley(X)"), Term.createTerm("resumetrolley(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outgreen("$name - RESUME RECEIVED! Sending RESUME to the trolley...")
+								forward("resumetrolley", "resumetrolley(X)" ,"trolley" ) 
 						}
 						//genTimer( actor, state )
 					}

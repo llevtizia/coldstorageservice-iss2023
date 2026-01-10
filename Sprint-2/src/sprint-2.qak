@@ -359,7 +359,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 			forward trolley -m resumetrolley : resumetrolley( X )
 		}
 	}
-	Goto waitrequest
+	Goto waitrequest 
 	
 	
 	// timeout?
