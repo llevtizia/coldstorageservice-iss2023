@@ -1,0 +1,61 @@
+plugins {
+	id 'java'
+    id 'org.springframework.boot' version '2.7.18'  // CAMBIATO DA 3.5.9 A 2.7.x
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'  // prima era 1.1.7 (versione compatibile)
+}
+
+group = 'unibo'
+version = '0.0.1-SNAPSHOT'
+description = 'serviceaccessgui for sprint 3'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // JSON - QUESTE DEVONO ESSERE PRIMA DI fileTree!
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'org.json:json:20210307'
+    implementation 'com.google.code.gson:gson:2.8.9'
+
+    // Guava - per charsets
+    implementation 'com.google.guava:guava:31.0.1-jre'
+
+    //ADDED for WebJars - bootstrap
+    implementation 'org.webjars:webjars-locator-core'
+    implementation 'org.webjars:bootstrap:5.1.3'
+    implementation 'org.webjars:jquery:3.6.0'
+
+    //ADDED for STOMP
+    implementation 'org.webjars:stomp-websocket:2.3.4'
+    // CoAP (Eclipse Californium)
+    implementation 'org.eclipse.californium:californium-core:3.0.0'
+
+    //CUSTOM unibo QAK libraries (tutte nella cartella unibolibs)
+    implementation fileTree(dir: '../unibolibs', include: ['*.jar'])
+
+    // testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('bootJar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+

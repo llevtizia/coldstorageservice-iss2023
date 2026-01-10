@@ -1,0 +1,310 @@
+/* reset e variabili: rimuove i margini e definisce variabili per i colori */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* include padding e border nelle dimensioni*/
+}
+
+:root {
+    --primary-color: #2563eb;       /* blu principale */
+    --secondary-color: #64748b;     /* grigio secondario */
+    --success-color: #10b981;       /* verde successo */
+    --danger-color: #ef4444;        /* rosso errore */
+    --warning-color: #f59e0b;       /* arancione warning */
+    --bg-color: #f8fafc;            /* colore sfondo chiaro */
+    --card-bg: #ffffff;             /* sfondo delle card */
+    --text-color: #1e293b;          /* colore testo */
+    --border-color: #e2e8f0;        /* colore bordi */
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);  /* ombra piccola */
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);   /* ombra grande */
+}
+
+/* imposta lo stile di base con sfondo sfumato e centra il contenuto */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;   /* font stack */
+    background: linear-gradient(100deg, #667eea 0%, #764ba2 100%);  /* sfondo gradient */
+    color: var(--text-color);                                       /* colore testo */
+    min-height: 100vh;                                              /* altezza minima viewport */
+    padding: 2rem 1rem;                                             /* padding generale */
+}
+
+.container {
+    max-width: 800px;   /* larghezza massima contenitore */
+    margin: 0 auto;     /* centratura orizzontale */
+}
+
+/* header: intestazione della pagina con titolo e sottotitolo */
+header {
+    text-align: center;        /* testo centrato */
+    margin-bottom: 2rem;       /* spazio sotto */
+    color: white;              /* testo bianco su sfondo scuro */
+}
+
+header h1 {
+    font-size: 2.5rem;                          /* dimensione titolo */
+    margin-bottom: 0.5rem;                      /* spazio sotto titolo */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);  /* ombra testo */
+}
+
+.subtitle {
+    font-size: 1.1rem;         /* dimensione sottotitolo */
+    opacity: 0.9;              /* leggera trasparenza */
+}
+
+/* cards: contenitori principali che contengono le varie sezioni */
+.card {
+    background: var(--card-bg);        /* sfondo bianco */
+    border-radius: 15px;               /* angoli arrotondati */
+    padding: 1.5rem;                   /* spazio interno */
+    margin-bottom: 1rem;               /* spazio tra card */
+    box-shadow: var(--shadow-lg);      /* ombra */
+}
+
+.card h2 {
+    font-size: 1.5rem;                              /* dimensione titolo card */
+    margin-bottom: 1rem;                            /* spazio sotto titolo */
+    color: var(--text-color);                       /* colore testo */
+    border-bottom: 5px solid var(--border-color);   /* linea sotto titolo */
+    padding-bottom: 0.5rem;                         /* spazio tra testo e linea */
+}
+
+/* status: crea i riquadri per visualizzare peso corrente e capacità massima */
+.status-info {
+    display: grid;                                                  /* layout a griglia */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));    /* colonne responsive */
+    gap: 1rem;                                                      /* spazio tra elementi */
+    margin-bottom: 1rem;                                            /* spazio sotto */
+}
+
+.status-item {
+    display: flex;                                  /* flexbox per allineamento */
+    flex-direction: column;                         /* elementi in colonna */
+    padding: 1rem;                                  /* spazio interno */
+    background: var(--bg-color);                    /* sfondo grigio chiaro */
+    border-radius: 20px;                             /* angoli arrotondati */
+    border-left: 4px solid var(--primary-color);    /* bordo sinistro blu */
+}
+
+.status-item .label {
+    font-size: 0.875rem;                    /* dimensione testo piccola */
+    color: var(--secondary-color);          /* colore grigio */
+    margin-bottom: 0.25rem;                 /* spazio sotto */
+}
+
+.status-item .value {
+    font-size: 1.5rem;                      /* dimensione testo grande */
+    font-weight: bold;                      /* grassetto */
+    color: var(--primary-color);            /* colore blu */
+}
+
+/* forms per campi di input: peso, ticket */
+.form-group {
+    margin-bottom: 1rem;        /* spazio tra campi */
+}
+
+.form-group label {
+    display: block;                         /* label su riga separata */
+    margin-bottom: 0.5rem;                  /* spazio sotto label */
+    font-weight: 500;                       /* semi-grassetto */
+    color: var(--text-color);               /* colore testo */
+}
+
+.form-group input {
+    width: 100%;                            /* larghezza completa */
+    padding: 0.75rem;                       /* spazio interno */
+    border: 2px solid var(--border-color);  /* bordo grigio */
+    border-radius: 15px;                    /* angoli arrotondati */
+    font-size: 1rem;                        /* dimensione testo */
+    transition: all 0.3s ease;              /* animazione transizioni */
+}
+
+.form-group input:focus {
+    outline: none;                                  /* rimuove outline default */
+    border-color: var(--primary-color);             /* bordo blu al focus */
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);   /* ombra blu al focus */
+}
+
+/* buttons per i pulsanti */
+.btn {
+    padding: 0.75rem 1.5rem;                /* spazio interno */
+    border: none;                           /* nessun bordo */
+    border-radius: 15px;                    /* angoli arrotondati */
+    font-size: 1rem;                        /* dimensione testo */
+    font-weight: 500;                       /* Semi-grassetto */
+    cursor: pointer;                        /* cursore a mano */
+    transition: all 0.3s ease;              /* animazione transizioni */
+    display: inline-block;                  /* display inline con dimensioni */
+}
+
+.btn:hover {
+   transform: translateY(-2px);            /* effetto sollevamento al hover */
+   box-shadow: var(--shadow-lg);           /* ombra più marcata al hover */
+}
+
+.btn:active {
+    transform: translateY(0);               /* torna giù al click */
+}
+
+.btn-primary {
+    background: var(--primary-color);       /* blu */
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-secondary {
+    background: var(--secondary-color);     /* grigio */
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+}
+
+.btn-success {
+    background: var(--success-color);       /* verde */
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* response messages per messaggi di feedback */
+.response-message {
+    margin-top: 1rem;                       /* spazio sopra */
+    padding: 1rem;                          /* spazio interno */
+    border-radius: 8px;                     /* angoli arrotondati */
+    display: none;                          /* nascosto di default */
+}
+
+.response-message.show {
+    display: block;                         /* mostrato quando ha classe 'show' */
+    animation: slideIn 0.3s ease;           /* animazione entrata */
+}
+
+.response-message.success {
+    background: #d1fae5;                            /* sfondo verde chiaro */
+    color: #065f46;                                 /* testo verde scuro */
+    border-left: 4px solid var(--success-color);    /* bordo sinistro verde */
+}
+
+.response-message.error {
+    background: #fee2e2;                            /* sfondo rosso chiaro */
+    color: #991b1b;                                 /* testo rosso scuro */
+    border-left: 4px solid var(--danger-color);     /* bordo sinistro rosso */
+}
+
+/* ticket display: per visualizzare il ticket attivo con timer di scadenza */
+.ticket-display {
+    margin-top: 1.5rem;                     /* spazio sopra */
+    animation: slideIn 0.5s ease;           /* animazione entrata */
+}
+
+.ticket-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);  /* sfondo gradient */
+    color: white;                                                   /* testo bianco */
+    padding: 1.5rem;                                                /* spazio interno */
+    border-radius: 12px;                                            /* angoli arrotondati */
+    box-shadow: var(--shadow-lg);                                   /* ombra */
+}
+
+.ticket-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.ticket-info {
+    background: rgba(255, 255, 255, 0.1);   /* sfondo semi-trasparente */
+    padding: 1rem;                          /* spazio interno */
+    border-radius: 8px;                     /* angoli arrotondati */
+    margin-bottom: 1rem;                    /* spazio sotto */
+}
+
+.ticket-info > div {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket-info > div:last-child {
+    margin-bottom: 0;
+}
+
+.ticket-number .highlight {
+    font-size: 1.5rem;                      /* dimensione grande */
+    font-weight: bold;                      /* grassetto */
+    background: rgba(255, 255, 255, 0.2);   /* sfondo semi-trasparente */
+    padding: 0.25rem 0.75rem;               /* spazio interno */
+    border-radius: 6px;                     /* angoli arrotondati */
+}
+
+.timer {
+    font-size: 1.25rem;                     /* dimensione testo */
+    font-weight: bold;                      /* grassetto */
+}
+
+.timer.warning {
+    color: var(--warning-color);            /* colore arancione quando poco tempo */
+    animation: pulse 1s infinite;           /* animazione pulsante */
+}
+
+.ticket-instruction {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.section-description {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+/* footer */
+footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem;
+    color: white;
+    opacity: 0.8;
+}
+
+/* animations: entrata dall'alto e pulsazione */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* responsive per telefono*/
+@media (max-width: 640px) {                 /* per schermi fino a 640px */
+    header h1 {
+        font-size: 2rem;                    /* titolo più piccolo */
+    }
+
+    .card {
+        padding: 1rem;                      /* meno padding nelle card */
+    }
+
+    .status-info {
+        grid-template-columns: 1fr;         /* una colonna */
+    }
+}

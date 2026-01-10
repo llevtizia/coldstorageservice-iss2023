@@ -128,6 +128,10 @@ k {
 	font-size: 100%;
 }
 
+highlight {
+    background-color: yellow;
+}
+
 
 /* ========= Div ========= */
 div.body {
@@ -278,6 +282,39 @@ img {
     display: flex;
 }
 
-highlight {
-    background-color: yellow;
+
+.image-container-sameline {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
 }
+        
+.image-item-sameline{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%; /* Ogni immagine occupa il 45% della riga */
+    overflow: hidden; /* Nasconde l'overflow durante l'animazione */
+    cursor: pointer;
+}
+        
+.image-item-sameline img {
+    width: 100%;
+    height: auto; /* Altezza automatica in base alle proporzioni */
+    max-height: 400px; /* Altezza massima opzionale */
+    object-fit: contain;
+    border: none;
+    background-color: transparent;
+    transition: transform 0.3s ease; /* Transizione smooth */
+}
+        
+.caption {
+    margin-top: 10px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    font-style: italic;
+}
+

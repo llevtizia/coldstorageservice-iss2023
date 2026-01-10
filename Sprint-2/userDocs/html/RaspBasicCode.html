@@ -1,27 +1,24 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>RaspBasicCode &#8212; iss23 1.0 documentation</title>
+    <title>RaspBasicCode &#8212; iss24 1.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/nature.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
-    
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
-    
-    <script src="_static/sidebar.js"></script>
-    
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Appunti su tecnologie" href="AppuntiTecnologie.html" />
-    <link rel="prev" title="Uso di un planner" href="UsoDiunPlanner.html" /> 
+    <link rel="next" title="QakService24Init" href="QakService24Init.html" />
+    <link rel="prev" title="RaspberrySoftware" href="RaspberrySoftware.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -30,12 +27,12 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="AppuntiTecnologie.html" title="Appunti su tecnologie"
+          <a href="QakService24Init.html" title="QakService24Init"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="UsoDiunPlanner.html" title="Uso di un planner"
+          <a href="RaspberrySoftware.html" title="RaspberrySoftware"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">iss23 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">iss24 1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">RaspBasicCode</a></li> 
       </ul>
     </div>  
@@ -46,7 +43,7 @@
           <div class="body" role="main">
             
   <section id="raspbasiccode">
-<h1>RaspBasicCode<a class="headerlink" href="#raspbasiccode" title="Permalink to this headline">¶</a></h1>
+<h1>RaspBasicCode<a class="headerlink" href="#raspbasiccode" title="Permalink to this heading">¶</a></h1>
 <img alt="_images/Raspberry-Pi-GPIO-Layout-Model-B-Plus.png" src="_images/Raspberry-Pi-GPIO-Layout-Model-B-Plus.png" />
 <ul class="simple">
 <li><p>Alimentazione richiesta: 5V e 2.5Amps.</p></li>
@@ -62,7 +59,7 @@
 </li>
 </ul>
 <section id="id1">
-<h2>wiringpi<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>wiringpi<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
 <p><a class="reference external" href="http://wiringpi.com/">wiringPi</a> include un’utilità da riga di comando <code class="docutils literal notranslate"><span class="pre">gpio</span></code> che può essere utilizzata per programmare
 e configurare i pin GPIO.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">wiringpi</span>
@@ -74,7 +71,7 @@ e configurare i pin GPIO.</p>
      <span class="o">*</span> <span class="n">This</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="n">supports</span> <span class="n">user</span><span class="o">-</span><span class="n">level</span> <span class="n">GPIO</span> <span class="n">access</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>Per usare wiringpi su Bullseye si veda <span class="xref std std-ref">wiringpi on Bullseye</span>.</p>
+<p>Per usare wiringpi su Bullseye si veda <a class="reference internal" href="RaspberrySoftware.html#wiringpi-on-bullseye"><span class="std std-ref">wiringpi on Bullseye</span></a>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Esempi</span> <span class="n">di</span> <span class="n">uso</span><span class="p">:</span>
      <span class="n">gpio</span> <span class="n">unexportall</span>
      <span class="n">gpio</span> <span class="n">export</span> <span class="mi">25</span> <span class="n">out</span>
@@ -87,8 +84,8 @@ e configurare i pin GPIO.</p>
    <span class="o">|</span> <span class="n">BCM</span> <span class="o">|</span> <span class="n">wPi</span> <span class="o">|</span>   <span class="n">Name</span>  <span class="o">|</span> <span class="n">Mode</span> <span class="o">|</span> <span class="n">V</span> <span class="o">|</span> <span class="n">Physical</span> <span class="o">|</span> <span class="n">V</span> <span class="o">|</span> <span class="n">Mode</span> <span class="o">|</span> <span class="n">Name</span>    <span class="o">|</span> <span class="n">wPi</span> <span class="o">|</span> <span class="n">BCM</span> <span class="o">|</span>
    <span class="o">+-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+</span>
    <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>    <span class="mf">3.3</span><span class="n">v</span> <span class="o">|</span>      <span class="o">|</span>   <span class="o">|</span>  <span class="mi">1</span> <span class="o">||</span> <span class="mi">2</span>  <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">5</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
-   <span class="o">|</span>   <span class="mi">2</span> <span class="o">|</span>   <span class="mi">8</span> <span class="o">|</span>   <span class="n">SDA</span><span class="o">.</span><span class="mi">1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span>  <span class="mi">3</span> <span class="o">||</span> <span class="mi">4</span>  <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">5</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
-   <span class="o">|</span>   <span class="mi">3</span> <span class="o">|</span>   <span class="mi">9</span> <span class="o">|</span>   <span class="n">SCL</span><span class="o">.</span><span class="mi">1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span>  <span class="mi">5</span> <span class="o">||</span> <span class="mi">6</span>  <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
+   <span class="o">|</span>   <span class="mi">2</span> <span class="o">|</span>   <span class="mi">8</span> <span class="o">|</span>   <span class="n">SDA</span><span class="mf">.1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span>  <span class="mi">3</span> <span class="o">||</span> <span class="mi">4</span>  <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">5</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
+   <span class="o">|</span>   <span class="mi">3</span> <span class="o">|</span>   <span class="mi">9</span> <span class="o">|</span>   <span class="n">SCL</span><span class="mf">.1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span>  <span class="mi">5</span> <span class="o">||</span> <span class="mi">6</span>  <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
    <span class="o">|</span>   <span class="mi">4</span> <span class="o">|</span>   <span class="mi">7</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span> <span class="mi">7</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span>  <span class="mi">7</span> <span class="o">||</span> <span class="mi">8</span>  <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="n">TxD</span>     <span class="o">|</span> <span class="mi">15</span>  <span class="o">|</span> <span class="mi">14</span>  <span class="o">|</span>
    <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>      <span class="mi">0</span><span class="n">v</span> <span class="o">|</span>      <span class="o">|</span>   <span class="o">|</span>  <span class="mi">9</span> <span class="o">||</span> <span class="mi">10</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">ALT0</span> <span class="o">|</span> <span class="n">RxD</span>     <span class="o">|</span> <span class="mi">16</span>  <span class="o">|</span> <span class="mi">15</span>  <span class="o">|</span>
    <span class="o">|</span>  <span class="mi">17</span> <span class="o">|</span>   <span class="mi">0</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span> <span class="mi">0</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">11</span> <span class="o">||</span> <span class="mi">12</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">1</span>   <span class="o">|</span> <span class="mi">18</span>  <span class="o">|</span>
@@ -99,13 +96,13 @@ e configurare i pin GPIO.</p>
    <span class="o">|</span>   <span class="mi">9</span> <span class="o">|</span>  <span class="mi">13</span> <span class="o">|</span>    <span class="n">MISO</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">21</span> <span class="o">||</span> <span class="mi">22</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">OUT</span>  <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span> <span class="mi">6</span> <span class="o">|</span> <span class="mi">6</span>   <span class="o">|</span> <span class="mi">25</span>  <span class="o">|</span>
    <span class="o">|</span>  <span class="mi">11</span> <span class="o">|</span>  <span class="mi">14</span> <span class="o">|</span>    <span class="n">SCLK</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">23</span> <span class="o">||</span> <span class="mi">24</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">CE0</span>     <span class="o">|</span> <span class="mi">10</span>  <span class="o">|</span> <span class="mi">8</span>   <span class="o">|</span>
    <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>      <span class="mi">0</span><span class="n">v</span> <span class="o">|</span>      <span class="o">|</span>   <span class="o">|</span> <span class="mi">25</span> <span class="o">||</span> <span class="mi">26</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">CE1</span>     <span class="o">|</span> <span class="mi">11</span>  <span class="o">|</span> <span class="mi">7</span>   <span class="o">|</span>
-   <span class="o">|</span>   <span class="mi">0</span> <span class="o">|</span>  <span class="mi">30</span> <span class="o">|</span>   <span class="n">SDA</span><span class="o">.</span><span class="mi">0</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">27</span> <span class="o">||</span> <span class="mi">28</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">SCL</span><span class="o">.</span><span class="mi">0</span>   <span class="o">|</span> <span class="mi">31</span>  <span class="o">|</span> <span class="mi">1</span>   <span class="o">|</span>
-   <span class="o">|</span>   <span class="mi">5</span> <span class="o">|</span>  <span class="mi">21</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">21</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">29</span> <span class="o">||</span> <span class="mi">30</span> <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
-   <span class="o">|</span>   <span class="mi">6</span> <span class="o">|</span>  <span class="mi">22</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">22</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">31</span> <span class="o">||</span> <span class="mi">32</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">26</span> <span class="o">|</span> <span class="mi">26</span>  <span class="o">|</span> <span class="mi">12</span>  <span class="o">|</span>
-   <span class="o">|</span>  <span class="mi">13</span> <span class="o">|</span>  <span class="mi">23</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">23</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">33</span> <span class="o">||</span> <span class="mi">34</span> <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
-   <span class="o">|</span>  <span class="mi">19</span> <span class="o">|</span>  <span class="mi">24</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">24</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">35</span> <span class="o">||</span> <span class="mi">36</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">27</span> <span class="o">|</span> <span class="mi">27</span>  <span class="o">|</span> <span class="mi">16</span>  <span class="o">|</span>
-   <span class="o">|</span>  <span class="mi">26</span> <span class="o">|</span>  <span class="mi">25</span> <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">25</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">37</span> <span class="o">||</span> <span class="mi">38</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">28</span> <span class="o">|</span> <span class="mi">28</span>  <span class="o">|</span> <span class="mi">20</span>  <span class="o">|</span>
-   <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>      <span class="mi">0</span><span class="n">v</span> <span class="o">|</span>      <span class="o">|</span>   <span class="o">|</span> <span class="mi">39</span> <span class="o">||</span> <span class="mi">40</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="o">.</span><span class="mi">29</span> <span class="o">|</span> <span class="mi">29</span>  <span class="o">|</span> <span class="mi">21</span>  <span class="o">|</span>
+   <span class="o">|</span>   <span class="mi">0</span> <span class="o">|</span>  <span class="mi">30</span> <span class="o">|</span>   <span class="n">SDA</span><span class="mf">.0</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">27</span> <span class="o">||</span> <span class="mi">28</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">SCL</span><span class="mf">.0</span>   <span class="o">|</span> <span class="mi">31</span>  <span class="o">|</span> <span class="mi">1</span>   <span class="o">|</span>
+   <span class="o">|</span>   <span class="mi">5</span> <span class="o">|</span>  <span class="mi">21</span> <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.21</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">29</span> <span class="o">||</span> <span class="mi">30</span> <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
+   <span class="o">|</span>   <span class="mi">6</span> <span class="o">|</span>  <span class="mi">22</span> <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.22</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">1</span> <span class="o">|</span> <span class="mi">31</span> <span class="o">||</span> <span class="mi">32</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.26</span> <span class="o">|</span> <span class="mi">26</span>  <span class="o">|</span> <span class="mi">12</span>  <span class="o">|</span>
+   <span class="o">|</span>  <span class="mi">13</span> <span class="o">|</span>  <span class="mi">23</span> <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.23</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">33</span> <span class="o">||</span> <span class="mi">34</span> <span class="o">|</span>   <span class="o">|</span>      <span class="o">|</span> <span class="mi">0</span><span class="n">v</span>      <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>
+   <span class="o">|</span>  <span class="mi">19</span> <span class="o">|</span>  <span class="mi">24</span> <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.24</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">35</span> <span class="o">||</span> <span class="mi">36</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.27</span> <span class="o">|</span> <span class="mi">27</span>  <span class="o">|</span> <span class="mi">16</span>  <span class="o">|</span>
+   <span class="o">|</span>  <span class="mi">26</span> <span class="o">|</span>  <span class="mi">25</span> <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.25</span> <span class="o">|</span>   <span class="n">IN</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="mi">37</span> <span class="o">||</span> <span class="mi">38</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.28</span> <span class="o">|</span> <span class="mi">28</span>  <span class="o">|</span> <span class="mi">20</span>  <span class="o">|</span>
+   <span class="o">|</span>     <span class="o">|</span>     <span class="o">|</span>      <span class="mi">0</span><span class="n">v</span> <span class="o">|</span>      <span class="o">|</span>   <span class="o">|</span> <span class="mi">39</span> <span class="o">||</span> <span class="mi">40</span> <span class="o">|</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">IN</span>   <span class="o">|</span> <span class="n">GPIO</span><span class="mf">.29</span> <span class="o">|</span> <span class="mi">29</span>  <span class="o">|</span> <span class="mi">21</span>  <span class="o">|</span>
    <span class="o">+-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+</span>
    <span class="o">|</span> <span class="n">BCM</span> <span class="o">|</span> <span class="n">wPi</span> <span class="o">|</span>   <span class="n">Name</span>  <span class="o">|</span> <span class="n">Mode</span> <span class="o">|</span> <span class="n">V</span> <span class="o">|</span> <span class="n">Physical</span> <span class="o">|</span> <span class="n">V</span> <span class="o">|</span> <span class="n">Mode</span> <span class="o">|</span> <span class="n">Name</span>    <span class="o">|</span> <span class="n">wPi</span> <span class="o">|</span> <span class="n">BCM</span> <span class="o">|</span>
    <span class="o">+-----+-----+---------+------+---+---</span><span class="n">Pi</span> <span class="n">B</span><span class="o">+--+---+------+---------+-----+-----+</span>
@@ -114,9 +111,9 @@ e configurare i pin GPIO.</p>
 <p>BCM sta per: <em>Broadcom SOC channel</em>.</p>
 </section>
 <section id="comandi-utili">
-<h2>Comandi utili<a class="headerlink" href="#comandi-utili" title="Permalink to this headline">¶</a></h2>
+<h2>Comandi utili<a class="headerlink" href="#comandi-utili" title="Permalink to this heading">¶</a></h2>
 <p>Richiamiamo alcuni comandi di uso frequente</p>
-<table class="colwidths-given docutils align-left" style="width: 100%">
+<table class="docutils align-left" style="width: 100%">
 <colgroup>
 <col style="width: 60%" />
 <col style="width: 40%" />
@@ -152,13 +149,13 @@ e configurare i pin GPIO.</p>
 </table>
 </section>
 <section id="primi-programmi">
-<h2>Primi programmi<a class="headerlink" href="#primi-programmi" title="Permalink to this headline">¶</a></h2>
+<h2>Primi programmi<a class="headerlink" href="#primi-programmi" title="Permalink to this heading">¶</a></h2>
 <section id="usiamo-un-led">
-<h3>Usiamo un LED<a class="headerlink" href="#usiamo-un-led" title="Permalink to this headline">¶</a></h3>
+<h3>Usiamo un LED<a class="headerlink" href="#usiamo-un-led" title="Permalink to this heading">¶</a></h3>
 <p>Colleghiamo l’anodo (gambo lungo, +) di un LED al GPIO pin BCM25
 (fisico 22) e il catodo (gambo corto, -) a GND (fisico 20).</p>
 <section id="accendiamo-il-led-usando-shell-script">
-<h4>Accendiamo il led usando shell script<a class="headerlink" href="#accendiamo-il-led-usando-shell-script" title="Permalink to this headline">¶</a></h4>
+<h4>Accendiamo il led usando shell script<a class="headerlink" href="#accendiamo-il-led-usando-shell-script" title="Permalink to this heading">¶</a></h4>
 <p>In un file <code class="docutils literal notranslate"><span class="pre">led25OnOff.sh</span></code> scriviamo:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">echo</span> <span class="n">Unexporting</span><span class="o">.</span>
 <span class="n">echo</span> <span class="mi">25</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">class</span><span class="o">/</span><span class="n">gpio</span><span class="o">/</span><span class="n">unexport</span> <span class="c1">#</span>
@@ -183,7 +180,7 @@ e configurare i pin GPIO.</p>
 <p>Uso: <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">bash</span> <span class="pre">led25OnOff.sh</span></code></p>
 </section>
 <section id="accendiamo-il-led-usando-gpio">
-<h4>Accendiamo il led usando gpio<a class="headerlink" href="#accendiamo-il-led-usando-gpio" title="Permalink to this headline">¶</a></h4>
+<h4>Accendiamo il led usando gpio<a class="headerlink" href="#accendiamo-il-led-usando-gpio" title="Permalink to this heading">¶</a></h4>
 <p>In un file <code class="docutils literal notranslate"><span class="pre">led25Gpio.sh</span></code> scriviamo:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gpio</span> <span class="n">readall</span> <span class="c1">#</span>
 <span class="n">echo</span> <span class="n">Setting</span> <span class="n">direction</span> <span class="n">to</span> <span class="n">out</span>
@@ -198,7 +195,7 @@ e configurare i pin GPIO.</p>
 <p>Uso: <code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">led25Gpio.sh</span></code></p>
 </section>
 <section id="accendiamo-il-led-usando-python">
-<h4>Accendiamo il led usando Python<a class="headerlink" href="#accendiamo-il-led-usando-python" title="Permalink to this headline">¶</a></h4>
+<h4>Accendiamo il led usando Python<a class="headerlink" href="#accendiamo-il-led-usando-python" title="Permalink to this heading">¶</a></h4>
 <p>In un file <code class="docutils literal notranslate"><span class="pre">ledPython25.py</span></code> scriviamo:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">RPi.GPIO</span> <span class="k">as</span> <span class="nn">GPIO</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -225,7 +222,7 @@ e configurare i pin GPIO.</p>
 </section>
 </section>
 <section id="usiamo-un-sonar-hc-sr04">
-<h3>Usiamo un SONAR HC-SR04<a class="headerlink" href="#usiamo-un-sonar-hc-sr04" title="Permalink to this headline">¶</a></h3>
+<h3>Usiamo un SONAR HC-SR04<a class="headerlink" href="#usiamo-un-sonar-hc-sr04" title="Permalink to this heading">¶</a></h3>
 <p>Il sensore è composto da un trasmettitore ad ultrasuoni e un ricevitore,
 ha una portata da <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">a</span> <span class="pre">400</span> <span class="pre">cm</span></code> e una precisione della misurazione di <code class="docutils literal notranslate"><span class="pre">+/-</span> <span class="pre">0,5</span> <span class="pre">cm</span></code>.
 La velocità del suono è di <code class="docutils literal notranslate"><span class="pre">343,3</span> <span class="pre">m/s</span></code> o <code class="docutils literal notranslate"><span class="pre">34330</span> <span class="pre">cm/s</span></code>.</p>
@@ -238,7 +235,7 @@ come segue:</p>
 </pre></div>
 </div>
 <section id="attiviamo-il-sonar-usando-python">
-<h4>Attiviamo il sonar usando Python<a class="headerlink" href="#attiviamo-il-sonar-usando-python" title="Permalink to this headline">¶</a></h4>
+<h4>Attiviamo il sonar usando Python<a class="headerlink" href="#attiviamo-il-sonar-usando-python" title="Permalink to this heading">¶</a></h4>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># File: sonar.py</span>
 <span class="kn">import</span> <span class="nn">RPi.GPIO</span> <span class="k">as</span> <span class="nn">GPIO</span>
 <span class="kn">import</span> <span class="nn">time</span>
@@ -280,7 +277,7 @@ come segue:</p>
 <p>Questo codice visualizza sul dispositivo standard di output l’informazione sulla distanza rilevata.</p>
 </section>
 <section id="attiviamo-il-sonar-usando-c">
-<h4>Attiviamo il sonar usando C<a class="headerlink" href="#attiviamo-il-sonar-usando-c" title="Permalink to this headline">¶</a></h4>
+<h4>Attiviamo il sonar usando C<a class="headerlink" href="#attiviamo-il-sonar-usando-c" title="Permalink to this heading">¶</a></h4>
 <p>Definiamo un programma analogo a precedente, ma scritto in linguaggio C++, che invia sul dispositivo standard di output
 il valore della distanza rilevata dal Sonar.</p>
 <p>Si veda: <a class="reference external" href="./_static/code/SonarAlone.c">SonarAlone.c</a></p>
@@ -293,11 +290,11 @@ il valore della distanza rilevata dal Sonar.</p>
 </section>
 </section>
 <section id="accendiamo-il-led-se-qualcosa-si-avvicina">
-<h3>Accendiamo il LED se qualcosa si avvicina<a class="headerlink" href="#accendiamo-il-led-se-qualcosa-si-avvicina" title="Permalink to this headline">¶</a></h3>
+<h3>Accendiamo il LED se qualcosa si avvicina<a class="headerlink" href="#accendiamo-il-led-se-qualcosa-si-avvicina" title="Permalink to this heading">¶</a></h3>
 <p>Consideriamo il seguente requisito:</p>
 <p>(requisito <span class="blue">LedSonar</span>) : Accendere il Led se il Sonar rileva una distanza inferiore a un limite prefissato.</p>
 <section id="soluzione-in-c">
-<h4>Soluzione in C<a class="headerlink" href="#soluzione-in-c" title="Permalink to this headline">¶</a></h4>
+<h4>Soluzione in C<a class="headerlink" href="#soluzione-in-c" title="Permalink to this heading">¶</a></h4>
 <hr><p><span class="worktodo">WORKTODO: LedSonar</span></p>
 <ul class="simple">
 <li><p>Scrivere un programma <code class="docutils literal notranslate"><span class="pre">LedSonar.c</span></code> che risolve il problema estendendo il comportamento del programma
@@ -305,7 +302,7 @@ il valore della distanza rilevata dal Sonar.</p>
 </ul>
 <hr></section>
 <section id="soluzione-in-python">
-<h4>Soluzione in Python<a class="headerlink" href="#soluzione-in-python" title="Permalink to this headline">¶</a></h4>
+<h4>Soluzione in Python<a class="headerlink" href="#soluzione-in-python" title="Permalink to this heading">¶</a></h4>
 <p>Si tratta di realizzare una prima semplice catena <em>input-elaborazione-output</em>;
 i dati emessi dal sonar sullo dispositivo standard di uscita possono essere acquisiti
 da un altro programma attraverso il meccanismo delle <a class="reference external" href="https://linuxaria.com/article/pipes-linux?lang=it">pipe</a> di Linux/Unix.</p>
@@ -398,13 +395,13 @@ il Sonar rileva una distanza inferiore a un limite prefissato.</p></li>
   </div>
   <div>
     <h4>Previous topic</h4>
-    <p class="topless"><a href="UsoDiunPlanner.html"
-                          title="previous chapter">Uso di un planner</a></p>
+    <p class="topless"><a href="RaspberrySoftware.html"
+                          title="previous chapter">RaspberrySoftware</a></p>
   </div>
   <div>
     <h4>Next topic</h4>
-    <p class="topless"><a href="AppuntiTecnologie.html"
-                          title="next chapter">Appunti su tecnologie</a></p>
+    <p class="topless"><a href="QakService24Init.html"
+                          title="next chapter">QakService24Init</a></p>
   </div>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
@@ -422,7 +419,7 @@ il Sonar rileva una distanza inferiore a un limite prefissato.</p></li>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -434,18 +431,18 @@ il Sonar rileva una distanza inferiore a un limite prefissato.</p></li>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="AppuntiTecnologie.html" title="Appunti su tecnologie"
+          <a href="QakService24Init.html" title="QakService24Init"
              >next</a> |</li>
         <li class="right" >
-          <a href="UsoDiunPlanner.html" title="Uso di un planner"
+          <a href="RaspberrySoftware.html" title="RaspberrySoftware"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">iss23 1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">iss24 1.0 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">RaspBasicCode</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Antonio Natali.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+        &#169; Copyright 2024, Antonio Natali.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

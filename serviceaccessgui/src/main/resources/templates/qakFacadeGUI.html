@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- responsive design -->
+    <title>Cold Storage Service - Access GUI</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Cold Storage Service</h1>
+            <p class="subtitle">Service Access GUI</p>
+        </header>
+
+        <!-- SEZIONE STATO -->
+        <div class="status-section card">
+            <h2>Stato Sistema</h2> <!-- titolo sezione -->
+
+            <!-- contenitore informazioni stato -->
+            <div class="status-info">
+                <!-- primo campo: peso corrente -->
+                <div class="status-item">
+                    <span class="label">Peso corrente:</span>
+                    <span class="value" id="currentWeight">-- kg</span> <!-- valore da aggiornare -->
+                </div>
+                <!-- secondo campo: capacità massima -->
+                <div class="status-item">
+                    <span class="label">Capacità massima:</span>
+                    <span class="value">200 kg</span> <!-- valore fisso -->
+                </div>
+            </div>
+            <!-- bottone per aggiornare manualmente lo stato -->
+            <button class="btn btn-secondary" onclick="refreshStatus()">Aggiorna</button>
+        </div>
+
+        <!-- SEZIONE RICHIESTA DEPOSITO -->
+        <div class="request-section card">
+            <h2>Richiesta Deposito</h2>
+
+            <!-- form per inviare richiesta -->
+            <form id="storeForm" onsubmit="submitStoreRequest(event)">
+                <div class="form-group">
+                    <label for="weightInput">Peso da depositare (kg):</label>
+                    <input
+                        type="number"
+                        id="weightInput"
+                        name="weight"
+                        min="1"
+                        max="200"
+                        required
+                        placeholder="Inserisci peso in kg"
+                    >
+                    <!-- Input kg, ID per riferimento, nome del campo per l'invio,
+                    valore minimo, valore massimo, il campo è obbligatorio, testo che compare nella casella -->
+                </div>
+                <button type="submit" class="btn btn-primary">Invia Richiesta</button>
+            </form>
+
+            <!-- area per messaggio di risposta che inizialmente non si vede -->
+            <div id="storeResponse" class="response-message"></div>
+
+            <!-- Ticket ricevuto (parte mostrata solo quando la richiesta è accettata) -->
+            <div id="ticketDisplay" class="ticket-display" style="display: none;">
+                <div class="ticket-card">
+                    <h3>Richiesta Accettata!</h3>
+
+                    <div class="ticket-info">
+                        <!-- numero ticket generato -->
+                        <div class="ticket-number">
+                            <strong>Numero Ticket:</strong>
+                            <!-- numero da riempire -->
+                            <span id="ticketNumber" class="highlight">--</span>
+                        </div>
+                        <!-- peso della richiesta -->
+                        <div class="ticket-weight">
+                            <strong>Peso:</strong>
+                            <!-- peso da riempire -->
+                            <span id="ticketWeight">-- kg</span>
+                        </div>
+                        <!-- countdown di scadenza -->
+                        <div class="ticket-timer">
+                            <strong>Tempo rimasto:</strong>
+                            <span id="ticketTimer" class="timer">15:00</span>
+                        </div>
+                    </div>
+
+                    <!-- istruzioni per l'utente -->
+                    <p class="ticket-instruction">
+                        Porta il truck all'INDOOR e inserisci il ticket number qui sotto entro il tempo limite.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEZIONE INVIO TICKET -->
+        <div class="ticket-section card">
+            <h2>Invio Ticket</h2>
+            <p class="section-description">
+                Quando il truck è all'INDOOR, inserisci il numero del ticket ricevuto:
+            </p>
+
+            <!-- form per inviare il ticket -->
+            <form id="ticketForm" onsubmit="submitTicketRequest(event)">
+                <div class="form-group">
+                    <label for="ticketInput">Numero Ticket:</label>
+                    <input
+                        type="text"
+                        id="ticketInput"
+                        name="ticketNumber"
+                        required
+                        placeholder="Es: 1"
+                    >
+                </div>
+                <button type="submit" class="btn btn-success">Invia Ticket</button>
+            </form>
+
+            <!-- Messaggio di risposta ticket -->
+            <div id="ticketResponse" class="response-message"></div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>Cold Storage Service</p>
+        </footer>
+    </div>
+
+    <script th:src="@{/app.js}"></script>
+</body>
+</html>

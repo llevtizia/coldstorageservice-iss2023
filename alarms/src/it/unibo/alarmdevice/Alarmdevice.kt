@@ -21,15 +21,124 @@ class Alarmdevice ( name: String, scope: CoroutineScope, isconfined: Boolean=fal
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
+			
+				val MINT = 5									//seconds to wait from one stop to the next
+				var stopped: Boolean = false 					//true if the robot is stopped
+				var lastStopped = System.currentTimeMillis()	//when the robot got stopped the last time
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						CommUtils.outcyan("$name - START")
+						CommUtils.outcyan("$name - START (MANUAL = test mode)")
+						CommUtils.outcyan("$name - waiting for sonarstart...")
+						 subscribeToLocalActor("sonar")  
+						delay(1000) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("work") { //this:State
+					action { //it:State
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t00",targetState="handlesonarstart",cond=whenDispatch("sonarstart"))
+					transition(edgeName="t01",targetState="handlesonarstop",cond=whenDispatch("sonarstop"))
+					transition(edgeName="t02",targetState="handleobstacle",cond=whenEvent("obstacle"))
+					transition(edgeName="t03",targetState="handlefree",cond=whenEvent("free"))
+					transition(edgeName="t04",targetState="handledistance",cond=whenEvent("distance"))
+				}	 
+				state("handlesonarstart") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("sonarstart(X)"), Term.createTerm("sonarstart(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outgreen("$name - RECEIVED START COMMAND: ${payloadArg(0)}")
+								CommUtils.outgreen("$name - FORWARDING TO SONAR...")
+								forward("sonarstart", "sonarstart(X)" ,"sonar" ) 
+								CommUtils.outgreen("$name - COMMAND FORWARDED TO SONAR")
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("handlesonarstop") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("sonarstop(X)"), Term.createTerm("sonarstop(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outred("$name - STOPPING SONAR: ${payloadArg(0)}")
+								forward("sonarstop", "sonarstop(X)" ,"sonar" ) 
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("handleobstacle") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("obstacle(X)"), Term.createTerm("obstacle(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 val elapsedTime = ( System.currentTimeMillis() - lastStopped ) / 1000  
+								CommUtils.outred("$name | elapsedTime: $elapsedTime, stopped: $stopped, MINT: $MINT")
+								if(  !stopped && elapsedTime > MINT  
+								 ){CommUtils.outred("$name | STOP! Distance: ${payloadArg(0)}...")
+								forward("stoptrolley", "stoptrolley(stop)" ,"coldstorageservice" ) 
+								 
+										 			stopped = true
+										 			lastStopped = System.currentTimeMillis()
+								}
+								CommUtils.outred("$name | stopped: ${stopped}, last stopped: ${lastStopped}")
+								updateResourceRep( "alarmdevice(stop)"  
+								)
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("handlefree") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("free(X)"), Term.createTerm("free(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								if(  stopped  
+								 ){ stopped = false  
+								CommUtils.outgreen("$name | RESUME! Distance: ${payloadArg(0)}... ")
+								forward("resumetrolley", "resumetrolley(resume)" ,"coldstorageservice" ) 
+								updateResourceRep( "alarmdevice(resume)"  
+								)
+								}
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
+				}	 
+				state("handledistance") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("distance(D)"), Term.createTerm("distance(X)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								CommUtils.outcyan("$name - distance: ${payloadArg(0)}... the sonar works!")
+								updateResourceRep( "alarmdevice(distance)"  
+								)
+						}
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="work", cond=doswitch() )
 				}	 
 			}
 		}

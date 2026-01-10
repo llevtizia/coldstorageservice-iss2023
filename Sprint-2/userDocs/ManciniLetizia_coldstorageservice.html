@@ -8,6 +8,7 @@
     </head>
     
     <body>
+
         <div id="top">
             <h1>LABORATORIO DI INGEGNERIA DEI SISTEMI SOFTWARE <font size="5"></font> </h1>
         </div>  
@@ -16,13 +17,11 @@
         <div class="body"> 
         <h2>Introduction</h2>
         <div class="slide1">
-            <b>Goal Sprint 2</b>: 
+            <b>Goal Sprint 2</b>: estensione del sistema con <i>alarm</i> e <i>warning</i> devices 
         </div>
         <div class="remark">
             <p>
-                <a href="./../../Sprint-1/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 1</a>: lo Sprint 1 
-                si è occupato della realizzazione del <b>core</b> dell'applicazione. Si è concluso con la realizzazione 
-                di un prototipo con la seguente <b>architettura logica</b>:
+                <a href="./../../Sprint-1/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 1</a>: lo Sprint 1 si è occupato della realizzazione del <b>core</b> dell'applicazione. Si è concluso con la realizzazione di un prototipo con la seguente <b>architettura logica</b>:
             </p>
             <p>
                 <img src="./../../Sprint-1/coldstorageservicearch.png" alt="basic robot arch" class="medium_image">
@@ -34,10 +33,7 @@
         <h2>Requirements</h2>
         <div class="remark">
             <p>
-                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#userstories">User stories</a>: 
-                in questo <i>Sprint</i> sarà analizzato il keypoint <em>5</em>, relativo ai 
-                <k><a href="../../Sprint-0/userDocs/html/TemaFinale23.html#alarm-requirements">
-                    requisiti di allarme</a></k> del sistema.
+                <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#userstories">User stories</a>: in questo <i>Sprint</i> sarà analizzato il keypoint <em>5</em>, relativo ai <k><a href="../../Sprint-0/userDocs/html/TemaFinale23.html#alarm-requirements">requisiti di allarme</a></k> del sistema.
             </p>
             <ul>
                 <li>
@@ -66,7 +62,77 @@
         <!-- REQUIREMENTS ANALYSIS -->
         <h2>Requirement analysis</h2>
         <div class="remark">  
-               
+            <p>
+                Nello <ks>Sprint 1</ks>, sono stati definite 
+                <ul>
+                    <li>la gestione dei <b>movimenti</b> del <b>trolley</b></li>
+                    <li>le <b>interazioni</b> tra i componenti del sistema</li>
+                </ul>
+            </p>
+
+            <h3>KEYPOINTS</h3>
+            <ol>
+                <li>nuovi componenti del sistema: <em>alarm device</em> e <em>warning device</em></li>
+                <li><em>stop</em> e <em>resume</em> del trolley</li>
+                <li>gestione del <em>fallimento</em> del trolley</li>
+            </ol>
+
+            <p>
+                    Sia il <ks>Sonar</ks> che il <ks>Led</ks> sono connessi ad un Raspberry Pi e lavorano indipendentemente dal resto del sistema, comunicando con il servizio per poter stoppare e riavviare il trolley. 
+                    La scelta più efficiente è quindi mantenere la rappresentazione ad attori: l'entità che costituisce gli allarmi sarà rappresentata come un componente ad attori su un <b>contesto diverso</b> (<i><highlight>ctxalarms</highlight></i>) comunicante attraverso scambio di messaggi.
+            </p>
+
+            <h4 id="alarm device">1 - ALARM DEVICE</h4>
+            <p>
+                <p>
+                    Il committente fornisce il progetto 
+                    <a href="html/RaspApplCode24.html#progetto-sonarqak24">sonarqak24</a>:
+                    <ul>
+                        <li>sistema ad attori che utilizza il 
+                            <highlight><k>
+                                <a href="html/RaspBasicCode.html#usiamo-un-sonar-hc-sr04">SONAR HC-SR04</a>
+                            </k></highlight></li>
+                        <li>riceve ed esegue via rete comandi di <ks>sonarstart</ks> e <ks>sonarstop</ks></li>
+                        <li>invia ad altri componenti i valori di distanza filtrati entro un range predefinito</li>
+                    </ul>
+                    <div class="image-container-sameline">
+                        <div class="image-item-sameline">
+                            <img src="html/_images/tf23/sonarqak24arch.png" alt="Architettura con Actor esplicito">
+                            <div class="caption"><b>sonardevice</b>: Actor definito in modo esplicito nel modello applicativo</div>
+                        </div>
+                        
+                        <div class="image-item-sameline">
+                            <img src="html/_images/tf23/sonarqak24arch-coded.png" alt="Architettura con CodedQActor">
+                            <div class="caption"><b>sonardevice</b>: CodedQActor</div>
+                        </div>
+                    </div>
+                    <p>
+                        L'attore <ks>sonardevice</ks> genera i dati incapsulando codice di basso livello 
+                        <a href="sprint-2/sonar.py">sonar.py</a> per attivare il <k>SONAR HC-SR04</k> sul Raspberry. 
+                        Può essere realizzato in due modi:
+                        <ul>
+                            <li>in modo esplicito, definendo un Actor nel modello applicativo</li>
+                            <li>in modo "sommerso", definendo un 
+                                <em><a href="html/QakActors24.html#attori-coded">CodedQActor</a></em></li>
+                        </ul> 
+                    </p>
+                </p>
+            </p>
+
+            <h4 id="alarm device">2 - WARNING DEVICE</h4>
+            <p>
+                Da requisiti, il LED modifica il proprio stato sulla base dello <b>stato corrente</b> del trolley:
+                <ul>
+                    <li><ks>OFF</ks> quando il trolley è in <i>HOME</i></li>
+                    <li><ks>BLINK</ks> quando il trolley si muove</li>
+                    <li><ks>ON</ks> quando il trolley è <i>stopped</i></li>
+                </ul>
+
+                Il componente può ugualmente essere rappresentato come un attore nello stesso contesto <i>ctxalarms</i> dell'alarmdevice. 
+            </p>
+            <p>
+                Il committente fornisce inoltre una serie di funzioni Python <a href="html/code/sonarAndLed.py">SonarAndLed.py</a> per la gestione delle operazioni e la configurazione dei dispositivi.
+            </p>
             
         </div>
 
@@ -74,7 +140,42 @@
         <!-- PROBLEM ANALYSIS -->  
         <h2>Problem analysis</h2>
         <div class="remark">
-    
+            
+            <h3>Realizzazione dispositivi</h3>
+            <p>
+                Nella fase iniziale di sviluppo, si è scelto di <b>simulare</b> i dispositivi fisici per facilitare la realizzazione di un primo prototipo funzionante dell'applicazione.
+            </p>
+            <p>
+                <h4>Sonar Simulator</h4>
+                <p>
+                    Per il sonar, è stato definito un <hightlight>sonar simulato</hightlight> implementato dalla classe <a href="../../alarms/src/kotlin/sonarSimulator.kt">sonarSimulator.kt</a> 
+                    <ul>
+                        <li>
+                            Il sonar viene definito come un <i><k>attore streamer</k></i>, in grado di emettere eventi localmente usando la funzione <ks><highlight><a href="html/QakActors24.html#operazioni-relative-agli-eventi">emitLocalStreamEvent</a></highlight></ks>: gli attori interessati a ricevere gli eventi emessi si registreranno con la primitiva <ks><highlight><a href="html/QakActors24.html#operazioni-di-messaggista-publisch-subscribe">subscribeTo</a></highlight></ks>
+                        </li>
+                        <li>
+                            Vengono generati valori <i>distance</i> prevedibili che oscillano tra <b>0</b> e <b>80</b>, (aumentando e diminuendo in maniera costante di 5), simulando un ostacolo che si avvicina e allontana
+                        </li>
+                        <li>
+                            Fissato <ks>DLIMIT = 25</ks>, il sonar emette eventi <code>obstacle</code> quando la distanza misurata è minore e <code>free</code> quando il valore aumenta
+                        </li>
+                    </ul>
+                </p>
+                <h4>Led Simulator</h4>
+                <p>
+                    Il LED è implementato dalla classe <a href="../../alarms/src/kotlin/ledSimulator.kt">ledSimulator.kt</a>
+                    <ul>
+                        <li>
+                            Sulla base dello stato del trolley, il LED passa da uno stato all'altro: <ks>ON</ks>, <ks>OFF</ks> e <ks>BLINK</ks>, loggando il cambio di stato
+                        </li>
+                        <li>
+                            Quando il trolley è in movimento e il LED è in stato <k>BLINK</k>, alterna ON/OFF ogni 500ms
+                        </li>                        
+                    </ul>
+                </p>
+            </p>
+
+            <h3>Architettura</h3>
         </div>
 
 
@@ -86,7 +187,28 @@
 
         <h2>Test plans</h2>
         <div class="remark">
-    
+        <p>
+            <h4><ks>Test Sonar</ks></h4>
+            <ul>
+                <li>
+                    
+                </li>
+            </ul>
+
+            <h4><ks>Test Led</ks></h4>
+            <ul>
+                <li>
+
+                </li>
+            </ul>
+
+            <h4><ks>Test Sistema</ks></h4>
+            <ul>
+                <li>
+
+                </li>
+            </ul>
+        </p>
         </div>
         
 

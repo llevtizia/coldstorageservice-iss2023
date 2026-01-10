@@ -8,14 +8,20 @@ Event free				: free( X )			//emitted by sonarSimulator
 
 Dispatch stoptrolley	: stoptrolley( X )
 Dispatch resumetrolley	: resumetrolley( X )
-Dispatch info			: info ( X, Y )
-// ------------------------------------------------------------------------------
+
+// messaggi del sonar ------------------------------------------------------------------------------
 Dispatch sonarstart	: sonarstart( X )
 Dispatch sonarstop	: sonarstop( X )
   
+Dispatch setdistance : setdistance(D)  // per settare manualmente la distanza 
+  
+// messaggi del led -------------------------------------------------------------------------------
 
-// -------------------------------------------------------------------------------
-
+Dispatch ledoff   : ledoff( X )
+Dispatch ledon    : ledon( X )
+Dispatch ledblink : ledblink( X )
+Dispatch statustrolley : statustrolley( X, Y )  // per osservare il trolley
+//---------------------------------------------------------------------------------------------------
 
 Context ctxcoldstorageservice ip [host="127.0.0.1" port=8015] 
 Context ctxalarms             ip [host="localhost" port=8025]
@@ -27,10 +33,10 @@ ExternalQActor trolley context ctxcoldstorageservice
 
 CodedQActor sonar  context ctxalarms className "sonarSimulator"           //IN LOCALE
 //CodedQActor sonar  context ctxalarms className "sonarHCSR04Support23"   //SU RASP
+CodedQActor led   context ctxalarms className "ledSimulator"
 
 
-
-QActor alarmdevice context  ctxalarms { //sonar 
+QActor alarmdevice context  ctxalarms { //manager sonar 
 
 	[#	
 		val MINT = 5									//seconds to wait from one stop to the next
@@ -39,6 +45,7 @@ QActor alarmdevice context  ctxalarms { //sonar
 	#]
 
 	State s0 initial {
+		
 		println("$name - START") color cyan
 		[# subscribeToLocalActor("sonar") #]
 		
@@ -51,7 +58,7 @@ QActor alarmdevice context  ctxalarms { //sonar
 	
 	State work { 
 		//println("$name - waiting...") color cyan
-	}
+	} 
 	Transition t0 whenEvent obstacle -> handleobstacle
 					whenEvent free -> handlefree
 					whenEvent distance -> handledistance
@@ -71,7 +78,7 @@ QActor alarmdevice context  ctxalarms { //sonar
 		 		#] 
 		 	}
 		 	println("$name | stopped: ${stopped}, last stopped: ${lastStopped}") color red
-		 	//updateResource [# "alarmdevice(stop)" #]
+		 	updateResource [# "alarmdevice(stop)" #]
 		 }
 	}
 	Goto work  
@@ -83,27 +90,71 @@ QActor alarmdevice context  ctxalarms { //sonar
 				[# stopped = false #]
 				println("$name | RESUME! Distance: ${payloadArg(0)}... ") color green
 				forward coldstorageservice -m resumetrolley : resumetrolley( resume )
-				//updateResource [# "alarmdevice(resume)" #]
+				updateResource [# "alarmdevice(resume)" #]
 			}
 			 
 		}
 	}
-	Goto work
+	Goto work 
 	
 	State handledistance {
 		onMsg( distance : distance( X ) ) {
 			println("$name - distance: ${payloadArg(0)}... the sonar works!") color cyan
+			updateResource [# "alarmdevice(distance)" #]
 		}
 	}
 	Goto work
 } 
   
-/* 
-QActor warningdevice context ctxalarms { //led
+ 
+QActor warningdevice context ctxalarms { //manager led
+
+	[# 
+        var currentTrolleyState = "unknown"
+    #]
+    
 	State s0 initial {
-		println("$name - START") color green
+		println("$name - START") color yellow
+		
+		observeResource trolley msgid statustrolley
+		println("$name | OBSERVING trolley status...") color yellow
+		
+		forward led -m ledoff : ledoff(init)
 	}
+	Goto waitforchange
+	
+	State waitforchange {
+		
+	}
+	Transition t0 whenMsg statustrolley -> updateled
+	
+	State updateled {
+		onMsg( statustrolley : statustrolley( TICKET, STATE ) ) {
+			
+            [# currentTrolleyState = payloadArg(1) #]
+            
+            println("$name | Trolley state: $currentTrolleyState") color yellow
+            
+            if [# currentTrolleyState == "waitrequest" || currentTrolleyState == "trolleyathome" || currentTrolleyState == "resetdone" #] {
+                println("$name | LED OFF") color red
+                forward led -m ledoff : ledoff( home )
+            }
+            else {
+            	if [# currentTrolleyState == "stopped" #] {
+                	println("$name | LED ON") color green
+                	forward led -m ledon : ledon( stopped )
+				}
+	            else {
+	                println("$name | LED BLINKS") color yellow
+	                forward led -m ledblink : ledblink( moving )
+        		}
+            }
+        }
+            
+        updateResource [# "warningdevice($currentTrolleyState)" #]
+    }
+    Goto waitforchange
 }
-* */
+
 
 
