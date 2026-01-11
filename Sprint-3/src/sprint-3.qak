@@ -359,7 +359,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 			forward trolley -m resumetrolley : resumetrolley( X )
 		}
 	}
-	Goto waitrequest
+	Goto waitrequest 
 	
 	
 	// timeout?
@@ -860,6 +860,6 @@ QActor trolley context ctxcoldstorageservice {
 		
 		println("$name  disengaged") color magenta
 		delay 1000 //avoid to premature abort of connection
-		//[# System.exit(0) #] 
+		[# System.exit(0) #] 
 	}
 }
