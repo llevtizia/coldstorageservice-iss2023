@@ -128,19 +128,20 @@ QActor warningdevice context ctxalarms { //manager led
 	}
 	Transition t0 whenMsg statustrolley -> updateled
 	
-	State updateled {
+	State updateled { 
 		onMsg( statustrolley : statustrolley( TICKET, STATE ) ) {
 			
             [# currentTrolleyState = payloadArg(1) #]
             
             println("$name | Trolley state: $currentTrolleyState") color yellow
             
-            if [# currentTrolleyState == "waitrequest" || currentTrolleyState == "trolleyathome" || currentTrolleyState == "resetdone" #] {
+            if [# currentTrolleyState.contains("waitrequest") || currentTrolleyState.contains("trolleyathome") || 
+            	currentTrolleyState.contains("resetdone") #] {
                 println("$name | LED OFF") color red
                 forward led -m ledoff : ledoff( home )
             }
             else {
-            	if [# currentTrolleyState == "stopped" #] {
+            	if [# currentTrolleyState.contains("stopped") #] {
                 	println("$name | LED ON") color green
                 	forward led -m ledon : ledon( stopped )
 				}

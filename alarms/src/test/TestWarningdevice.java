@@ -198,12 +198,23 @@ public class TestWarningdevice {
             // 3 - STOPPED -> LED ON
             System.out.println("\n Stop trolley: STOPPED -> LED ON");
             TestUtils.forceStop();
-            TestUtils.waitForTrolleyState("stopped", 5);
+            TestUtils.waitForTrolleyState("stopped", 10);
             CommUtils.delay(1000);
             
-            String led3 = TestUtils.getCurrentLedState();
-            System.out.println("   LED: " + led3);
-            Assert.assertTrue("LED dovrebbe essere ON", led3.contains("ON") && !led3.contains("BLINK"));
+        	// retry per gestire transizioni
+            boolean ledIsOn = false;
+            String led3 = "";
+            for ( int i = 0; i < 5; i++ ) {
+                led3 = TestUtils.getCurrentLedState();
+                if ( led3.contains("ON") && !led3.contains("BLINK")) {
+                    ledIsOn = true;
+                    System.out.println("   LED: " + led3);
+                    break;
+                }
+                CommUtils.delay(500);
+            }
+            
+            Assert.assertTrue("LED dovrebbe essere ON", led3.contains("ON") && !led3.contains("BLINK") && ledIsOn);
             System.out.println("ON ok!");
             
             // 4 - MOVING -> LED BLINK

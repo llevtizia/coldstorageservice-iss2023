@@ -27,17 +27,7 @@ with Diagram('alarmsArch', show=False, outformat='png', graph_attr=graphattr) as
 ### see https://renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
      with Cluster('ctxcoldstorageservice', graph_attr=nodeattr):
           coldstorageservice=Custom('coldstorageservice(ext)','./qakicons/externalQActor.png')
-          trolley=Custom('trolley(ext)','./qakicons/externalQActor.png')
      with Cluster('ctxalarms', graph_attr=nodeattr):
           alarmdevice=Custom('alarmdevice','./qakicons/symActorSmall.png')
           warningdevice=Custom('warningdevice','./qakicons/symActorSmall.png')
-          sonar=Custom('sonar(coded)','./qakicons/codedQActor.png')
-          led=Custom('led(coded)','./qakicons/codedQActor.png')
-     sys >> Edge( label='obstacle', **evattr, decorate='true', fontcolor='darkgreen') >> alarmdevice
-     sys >> Edge( label='free', **evattr, decorate='true', fontcolor='darkgreen') >> alarmdevice
-     sys >> Edge( label='distance', **evattr, decorate='true', fontcolor='darkgreen') >> alarmdevice
-     alarmdevice >> Edge(color='blue', style='solid',  decorate='true', label='<sonarstart &nbsp; sonarstop &nbsp; >',  fontcolor='blue') >> sonar
-     warningdevice >> Edge(color='blue', style='solid',  decorate='true', label='<ledoff &nbsp; ledon &nbsp; ledblink &nbsp; >',  fontcolor='blue') >> led
-     trolley >> Edge(color='blue', style='solid',  decorate='true', label='<statustrolley &nbsp; >',  fontcolor='blue') >> warningdevice
-     alarmdevice >> Edge(color='blue', style='solid',  decorate='true', label='<stoptrolley &nbsp; resumetrolley &nbsp; >',  fontcolor='blue') >> coldstorageservice
 diag

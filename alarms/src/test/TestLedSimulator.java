@@ -13,9 +13,9 @@ import unibo.basicomm23.utils.CommUtils;
 /**
  * test del LED simulator
  * 
- * - ledoff → OFF
- * - ledon → ON
- * - ledblink → BLINK
+ * - ledoff -> OFF
+ * - ledon -> ON
+ * - ledblink -> BLINK
  */
 
 public class TestLedSimulator {
@@ -128,9 +128,10 @@ public class TestLedSimulator {
             System.out.println("Monitoraggio blinking...");
             
             String state1 = TestUtils.getCurrentLedState();
-            System.out.println("   t=0s: " + state1);
+            System.out.println("   t = 0s: " + state1);
             
             boolean blinkDetected = false;
+            int count = 0;
             
             for (int i = 0; i < 10; i++) {
                 CommUtils.delay(500);
@@ -139,16 +140,14 @@ public class TestLedSimulator {
                 // 3 - verifica che lo stato cambi (BLINK_ON/BLINK_OFF)
                 if ( !currentState.equals( state1 ) ) {
                     blinkDetected = true;
-                    System.out.println("   t=" + i + "s: " + currentState + " - cambio rilevato!");
-                }
-                
-                if (i % 2 == 0) {
-                    System.out.println("   t=" + i + "s: " + currentState);
+                    count++;
+                    System.out.println("   t = " + i + "s: " + currentState + " - cambio n. " + count + " rilevato!"); // stampo i cambiamenti
                 }
             }
             
             Assert.assertTrue("Il LED dovrebbe lampeggiare (lo stato deve cambiare)", blinkDetected);
             System.out.println("	LED lampeggia correttamente");
+            System.out.println("Cambiamenti di stato rilevati: " + count);
             
             // 4 - ferma il blinking con ledoff
             System.out.println("Fermo blinking con ledoff...");
@@ -167,81 +166,4 @@ public class TestLedSimulator {
             Assert.fail("Test fallito: " + e.getMessage());
         }
     }
-    
-    /**
-     * TEST 4: Transizioni tra stati LED
-     */
-    /*
-    @Test
-    public void testLedStateTransitions() {
-        try {
-            System.out.println("\n------- TEST 4: Transizioni stati LED -------");
-            System.out.println("Sequenza: OFF → ON → BLINK → OFF");
-            
-            // 1. OFF
-            System.out.println("\n1. OFF...");
-            IApplMessage offMsg = CommUtils.buildDispatch(
-                "test", 
-                "ledoff", 
-                "ledoff(transition)", 
-                TestUtils.ALARMS_CONTEXT
-            );
-            TestUtils.getAlarmsConnection().forward(offMsg);
-            CommUtils.delay(1000);
-            
-            String state1 = TestUtils.getCurrentLedState();
-            System.out.println("   Stato: " + state1);
-            Assert.assertTrue("LED dovrebbe essere OFF", state1.contains("OFF"));
-            System.out.println("   ✓ OFF");
-            
-            // 2. ON
-            System.out.println("\n2. ON...");
-            IApplMessage onMsg = CommUtils.buildDispatch(
-                "test", 
-                "ledon", 
-                "ledon(transition)", 
-                TestUtils.ALARMS_CONTEXT
-            );
-            TestUtils.getAlarmsConnection().forward(onMsg);
-            CommUtils.delay(1000);
-            
-            String state2 = TestUtils.getCurrentLedState();
-            System.out.println("   Stato: " + state2);
-            Assert.assertTrue("LED dovrebbe essere ON", state2.contains("ON"));
-            System.out.println("   ✓ ON");
-            
-            // 3. BLINK
-            System.out.println("\n3. BLINK...");
-            IApplMessage blinkMsg = CommUtils.buildDispatch(
-                "test", 
-                "ledblink", 
-                "ledblink(transition)", 
-                TestUtils.ALARMS_CONTEXT
-            );
-            TestUtils.getAlarmsConnection().forward(blinkMsg);
-            CommUtils.delay(2000);
-            
-            String state3 = TestUtils.getCurrentLedState();
-            System.out.println("   Stato: " + state3);
-            Assert.assertTrue("LED dovrebbe essere in BLINK", state3.contains("BLINK"));
-            System.out.println("   ✓ BLINK");
-            
-            // 4. Torna OFF
-            System.out.println("\n4. Torna OFF...");
-            TestUtils.getAlarmsConnection().forward(offMsg);
-            CommUtils.delay(1000);
-            
-            String state4 = TestUtils.getCurrentLedState();
-            System.out.println("   Stato: " + state4);
-            Assert.assertTrue("LED dovrebbe essere OFF", state4.contains("OFF"));
-            System.out.println("   ✓ OFF");
-            
-            System.out.println("\n------- TEST 4 PASSATO -------");
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Test fallito: " + e.getMessage());
-        }
-    }
-    */
 }

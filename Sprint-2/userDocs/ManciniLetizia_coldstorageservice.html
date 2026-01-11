@@ -199,7 +199,7 @@
                     </ul>
                 </p>
 
-                <h4>Led Simulator</h4>
+                <h4>Warning Device</h4>
                 <p>
                     Il LED è implementato dalla classe <a href="../../alarms/src/kotlin/ledSimulator.kt">ledSimulator.kt</a>
                     <ul>
@@ -285,11 +285,158 @@
                 </p>
             </p>
             
+            <h3>Architettura del sistema</h3>
+
+            <div class="image-container-sameline">
+                <div class="image-item-sameline">
+                    <img src="../coldstorageservicearch.png" alt="Architettura coldstorageservice">
+                    <div class="caption">Architettura <b>sprint-2.qak</b></div>
+                </div>
+                
+                <div class="image-item-sameline">
+                    <img src="../../alarms/alarmsarch.png" alt="Architettura alarms">
+                    <div class="caption">Architettura <b>alarms.qak</b></div>
+                </div>
+            </div>
+
+            <p>
+                Il sistema è realizzato con <highlight>due file QAK</highlight> che girano su contesti separati 
+                e comunicano via TCP:
+                <ul>
+                    <li>
+                        <ks>sprint-2.qak</ks> (porta 8015): logica di business del Cold Storage Service
+                    </li>
+                    <li>
+                        <ks>alarms.qak</ks> (porta 8025): gestione dispositivi di allarme e warning
+                    </li>
+                </ul>
+            </p>
         </div>
 
 
         <h2>Project</h2>
         <div class="remark">
+            <h3>Componenti principali</h3>
+            <p>
+                <p>
+                    <ul>
+                        <li>
+                            Modello del sistema <ks>coldstorageservice</ks>: <a href="../src/sprint-2.qak">coldstorageservice</a>
+                        </li>
+                        <li>
+                            Modello del sistema <ks>alarms</ks>: <a href="../../alarms/src/alarms.qak">alarms</a>
+                        </li>
+                    </ul>
+                </p>
+                <h4>Service Access GUI e Cold Storage Service</h4>
+                <p>I due attori sono invariati dallo <a href="../../Sprint-1/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 1</a>.</p>
+
+                <h4>Trolley</h4>
+                <p>
+                    <ul>
+                        <li>
+                            aggiunte variabili di stato <code>OldStatus</code>, <code>CurrentStatus</code>
+                        </li>
+                        <li>
+                            aggiunta gestione della ripresa dopo uno stop: <code>if [# stopped #]</code> e messaggio <code>resumetrolley</code>
+                        </li>
+                        <li>
+                            aggiunte transizioni di stato per <code>stoptrolley</code> e <code>reset</code>
+                        </li>
+                        <li>
+                            nuovi stati:
+                            <ul>
+                                <li>
+                                    <code><highlight>stoptrolley</highlight></code> per la gestione dello stop: ferma il trolley alla ricezione del messaggio <code>stoptrolley</code> inoltrato dal coldstorageservice, salva lo stato precedente del trolley, emette l'evento <code>alarm</code> per fermare fisicamente il basicrobot, ignora stop multipli se il trolley è già fermo
+                                </li>
+                                <li>
+                                    <code><highlight>forcehome</highlight></code> nel caso in cui <code>gohome</code> non riceva una risposta dal basicrobot (timeout 20 secondi): corregge l'orientamento del robot e riprova a tornare in HOME, dopo un timeout senza risposta va in <code>waitrequest</code>
+                                </li>
+                                <li>
+                                    <code><highlight>verifyfailed </highlight></code> gestisce i fallimenti di <code>gohome</code>: dopo <b>MAX_RETRY</b> tentativi accetta la posizione corrente
+                                </li>
+                                <li>
+                                    <code><highlight>checkretry</highlight></code>: separa la logica di retry dalla logica di fallback (in base a quanti tentativi sono già stati fatti)
+                                </li>
+                                <li>
+                                    <code><highlight>handlereset</highlight></code>: per resettare il sistema durante i test senza dover riavviare tutto, riporta il trolley in <code>HOME</code> da qualsiasi stato
+                                </li>
+                                <li>
+                                    <code><highlight>resetdone</highlight></code>: stato finale del reset, azzera le variabili e torna in <code>waitrequest</code> per accettare nuove richieste
+                                </li>
+                                <li>
+                                    <code><highlight>resetretry</highlight></code>: gestisce i fallimenti del reset, dopo tre tentativi forza il robot in HOME
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            stati modificati:
+                            <ul>
+                                <li>
+                                    <code><highlight>failed</highlight></code>: gestisce i retry, dopo <b>MAX_RETRY</b> forza il robot in <code>gohome</code>, usa il messaggio <code>tryagain</code> per tornare allo stato corretto
+                                </li>
+                                <li>
+                                    <code><highlight>trolleyathome</highlight></code>: il sistema rimane attivo per accettare nuove richieste e torna in <code>waitrequest</code>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            nuovo stato:
+                            <ul>
+                                <li>
+                                    <code><highlight>exitsystem</highlight></code>: per terminare effettivamente il sistema
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </p>
+
+                <h4>Alarm Device (gestore sonar)</h4>
+                <p>
+                    L'<ks>alarmdevice</ks> è l'attore che gestisce la logica di stop/resume basata sui dati del sonar
+                    <ul>
+                        <li>
+                            si sottoscrive agli eventi del sonar con <code>[# subscribeToLocalActor("sonar") #]</code>
+                        </li>
+                        <li>
+                            implementa la logica relativa a <b>MINT</b> per evitare stop multipli troppo ravvicinati
+                        </li>
+                        <li>
+                            quando riceve un evento <code>obstacle</code>, invia un messaggio <code>stoptrolley</code> al <ks>coldstorageservice</ks>
+                        </li>
+                        <li>
+                            quando riceve un evento <code>free</code>, invia un messaggio <code>resumetrolley</code> al <ks>coldstorageservice</ks>
+                        </li>
+                    </ul>
+                </p>
+
+                <h4>Warning Device (gestore led)</h4>
+                <p>
+                    Il <ks>warningdevice</ks> sincronizza il LED con lo stato del trolley
+                    <ul>
+                        <li>
+                            <em>pattern observer</em>: osserva la risorsa <code>statustrolley</code> usando <code>observeResource</code>
+                        </li>
+                        <li>
+                            riceve messaggi <code>statustrolley( TICKET, STATE )</code> ad ogni cambio di stato del trolley
+                        </li>
+                        <li>
+                            mappa lo stato del trolley in comandi LED
+                            <ul>
+                                <li>
+                                    <code>waitrequest</code>, <code>trolleyathome</code>, <code>resetdone</code>: <code>ledoff</code> (il trolley è in HOME)
+                                </li>
+                                <li>
+                                    <code>stopped</code>: <code>ledon</code> (il trolley è fermo)
+                                </li>
+                                <li>
+                                    tutti gli altri stati: <code>ledblink</code> (il trolley si sta muovendo)
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </p>
+            </p>
     
         </div>
        
@@ -297,32 +444,157 @@
         <h2>Test plans</h2>
         <div class="remark">
         <p>
-            <h4><ks>Test Sonar</ks></h4>
-            <ul>
-                <li>
+            <h3>Setup</h3>
+            <p>
+                La classe <a href="../../alarms/src/test/TestUtils.java"><code>TestUtils.java</code></a> definisce metodi di utility per il sistema:
+                <ul>
+                    <li>
+                        inizializza le connessioni TCP ai contesti (<i>connAlarms</i>, <i>connColdStorage</i>) e i client CoAP per il monitoraggio degli stati degli attori
+                    </li>
+                    <li>
+                        definisce metodi helper: <code>forceStop</code>, <code>forceResume</code> (per forzare stop e resume del sonar per gestire l'oscillazione), <code>startSonar</code>, <code>stopSonarForManualControl</code>, <code>waitForTrolleyState</code> (per verificare che il trolley sia in uno stato specifico), <code>startTrolleyProcess</code> (per avviare un processo e far muovere il trolley)
+                    </li>
+                    <li>
+                        metodi di reset/cleanup: <code>basicReset</code>, <code>completeCleanupWithVerification</code>
+                    </li>
+                    <li>
+                        verifica del ritorno in posizione HOME da parte del trolley: <code>waitForTrolleyHome</code>
+                    </li>
+                </ul>
+            </p>
+
+            <h3>Unit Tests: Test dei singoli componenti</h3>
+            <p>
+                <p>
+                    Verificano il funzionamento dei simulatori isolati. 
+                </p>
+                
+
+                <h4><a href="../../alarms/src/test/TestSonarSimulator.java">TestSonarSimulator (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testSonarStartsAndGeneratesEvents</highlight></code>: verifica che il sonar, avviato con un messaggio <code>sonarstart</code>, generi eventi che vengono ricevuti dall'<code>alarmdevice</code>.
+                        </li>
+                        <li>
+                            <code><highlight>testSonarStopsCorrectly</highlight></code>: verifica che il sonar, ricevuto il comando <code>sonarstop</code>, smetta di generare eventi (non cambia lo stato). 
+                        </li>
+                    </ul>
+                </p>
+
+                <h4><a href="../../alarms/src/test/TestLedSimulator.java">TestLedSimulator (link)</a></h4>
+                <ul>
+                    <li>
+                        <code><highlight>testLedOff</highlight></code>: viene inviato il messaggio <code>ledOff</code> e il LED aggiorna lo stato
+                    </li>
+                    <li>
+                        <code><highlight>testLedOn</highlight></code>: viene inviato il messaggio <code>ledOn</code> e il LED aggiorna lo stato
+                    </li>
+                    <li>
+                        <code><highlight>testLedBlink</highlight></code>: viene inviato il messaggio <code>ledblink</code> e il LED alterna tra BLINK_ON e BLINK_OFF
+                    </li>
+                </ul>
+            </p>
+
+            <h3>Integration Tests - Test delle interazioni</h3>
+            <p>
+                </p>
+                    Verificano che i componenti comunichino correttamente tra di loro.
+                <p>
+
+                <h4><a href="../../alarms/src/test/TestTrolleyStopResume.java">TestTrolleyStopResume (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testCompleteStopResumeCycle</highlight></code>: avvia un processo di deposito, ferma il trolley con <code>stoptrolley</code> e verifica che il trolley si fermi, poi aspetta prima di far ripartire il trolley con una <code>resumetrolley</code> e verifica che non sia più fermo
+                        </li>
+                        <li>
+                            <code><highlight>testTwoStopResumeCycles</highlight></code>: verifica che il sistema gestisca correttamente stop/resume multipli
+                        </li>
+                        <li>
+                            <code><highlight>testIgnoreStopWhenAlreadyStopped</highlight></code>: se il trolley riceve un secondo messaggio <code>stoptrolley</code> quando è già fermo, rimane fermo
+                        </li>
+                    </ul>
+                </p>
+
+                <h4><a href="../../alarms/src/test/TestSonarIntegration.java">TestSonarIntegration (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testCompleteSystemWithActiveSonar</highlight></code>: avvia trolley e sonar,  insieme, monitora il sistema e verifica che non ci siano problemi nelle interazioni
+                        </li>
+                        <li>
+                            <code><highlight>testMintWithActiveSonar</highlight></code>: avvia trolley e sonar, verifica ch l'intervallo tra due stop sia maggiore di <code>MINT</code> (5 secondi)
+                        </li>
+                        <li>
+                            <code><highlight>testSonarTriggersStopAndResume</highlight></code>: quando il sonar rileva un ostacolo, genera uno stop che ferma il trolley. Il trolley poi riparte solo dopo aver ricevuto una resume (area libera).
+                        </li>
+                    </ul>
+                </p>
+
+                <h4><a href="../../alarms/src/test/TestWarningdevice.java">TestWarningDevice (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testLedOffWhenTrolleyAtHome</highlight></code>: verifica che il LED sia in stato <code>OFF</code> quando il trolley è in HOME (stato <i>waitrequest</i>, <i>trolleyathome</i> o <i>resetdone</i>)
+                        </li>
+                        <li>
+                            <code><highlight>testLedBlinkWhenTrolleyMoving</highlight></code>: avvia un processo per far muovere il trolley e verifica che il LED sia in stato <code>BLINK</code> quando il trolley si muove
+                        </li>
+                        <li>
+                            <code><highlight>testLedOnWhenTrolleyStopped</highlight></code>: avvia un processo, ferma il trolley e verifica che il LED sia in stato <code>ON</code> (non BLINK_ON)
+                        </li>
+                        <li>
+                            <code><highlight>testCompleteLedCycle</highlight></code>: verifica che il LED segua i cambiamenti di stato del trolley. All'inizio il LED è <code>OFF</code> (trolley in HOME), poi viene avviato un processo di deposito per far muovere il trolley e il LED lampeggia (stato <code>BLINK</code>), infine il trolley viene fermato con unferma il trolley e verifica che il LED vada in stato <code>ON</code>. 
+                        </li>
+                        <li>
+                            <code><highlight>testWarningdevicePersistence</highlight></code>: il warningdevice osserva il trolley per più di un ciclo
+                        </li>
+                    </ul>
+                </p>
+            </p>
+
+            <h3>System Tests - Test del sistema completo</h3>
+            <p>
+                <h4><a href="../../alarms/src/test/TestSystemIntegration.java">TestSystemIntegration (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testSystemWithSonarAndLed</highlight></code>: verifica il funzionamento del sistema con il sonar che automaticamentegenera eventi <code>obstacle</code>/<code>free</code> (simulazione scenario reale)
+                        </li>
+                        <li>
+                            <code><highlight>testSonarLedCoordination</highlight></code>: gestione controllata degli eventi <code>obstacle</code>/<code>free</code> generati dal sonar (test del flusso completo)
+                        </li>
+                    </ul>
                     
-                </li>
-            </ul>
-
-            <h4><ks>Test Led</ks></h4>
-            <ul>
-                <li>
-
-                </li>
-            </ul>
-
-            <h4><ks>Test Sistema</ks></h4>
-            <ul>
-                <li>
-
-                </li>
-            </ul>
+                </p>
+                
+                <h4><a href="../../alarms/src/test/TestFullSystem.java">TestFullSystem (link)</a></h4>
+                <p>
+                    <ul>
+                        <li>
+                            <code><highlight>testCompleteSystemStability</highlight></code>: simulazione completa del sistema, conteggio eventi generati
+                        </li>
+                    </ul>
+                </p>
+            </p>
         </p>
         </div>
         
 
         <h2>Piano di lavoro</h2> 
         <div class="remark">
+            <table>
+                <tr>
+                    <td><b><a href="../../Sprint-3/userDocs/ManciniLetizia_coldstorageservice.html">SPRINT-3</a></b></td>
+                    <td>
+                        <ul>
+                            <li>realizzazione GUI di sistema</li>
+                            <li>testing</li>
+                        </ul>
+                    </td>
+                </tr>
+            </table>
         </div> 
 
         

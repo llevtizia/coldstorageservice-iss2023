@@ -1,3 +1,0 @@
-{"actor":"alarmdevice", "msgType":"dispatch", "curstate":"work", "nextstate":"handlesonarstart", "msgId":"sonarstart"}
-{"actor":"alarmdevice", "msgType":"dispatch", "curstate":"work", "nextstate":"handlesonarstop", "msgId":"sonarstop"}
-{"actor":"warningdevice", "msgType":"dispatch", "curstate":"waitforchange", "nextstate":"updateled", "msgId":"statustrolley"}

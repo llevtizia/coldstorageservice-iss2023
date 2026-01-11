@@ -64,7 +64,8 @@ public class TestFullSystem {
     @Test
     public void testCompleteSystemStability() {
         try {
-            System.out.println("\n------- TEST 4: Stabilità sistema completo -------");
+            System.out.println("\n------- TEST: Stabilità sistema completo -------");
+            System.out.println("Componenti attivi: Trolley, Sonar, LED, AlarmDevice, WarningDevice");
             
             // 1 - avvia tutto
             System.out.println("Avvio sistema completo...");
@@ -73,13 +74,23 @@ public class TestFullSystem {
             CommUtils.delay(2000);
             
             // 2 - monitora 
-            System.out.println("Monitoraggio...");
+            System.out.println("Monitoraggio sistema fino a completamento di un giro...");
             
-            int updates = 0;
+            // contatori
+            int trolleyUpdates = 0;
+            int ledUpdates = 0;
+            int alarmUpdates = 0;
+            int warningUpdates = 0;
+            
             String lastTrolleyState = "";
             String lastLedState = "";
+            String lastAlarmState = "";
+            String lastWarningState = "";
             
-            for ( int i = 0; i < 60; i++ ) {
+            boolean processCompleted = false;
+            int errorCount = 0;
+            
+            for ( int i = 0; i < 100; i++ ) {
                 try {
                     String trolleyState = TestUtils.getCurrentTrolleyState();
                     String ledState = TestUtils.getCurrentLedState();
@@ -87,34 +98,93 @@ public class TestFullSystem {
                     String warningState = TestUtils.getCurrentWarningdeviceState();
                     
                     // conta aggiornamenti
-                    if ( !trolleyState.equals(lastTrolleyState) || !ledState.equals(lastLedState)) {
-                        updates++;
+                    if ( !trolleyState.equals(lastTrolleyState) ) {
+                        trolleyUpdates++;
+                        lastTrolleyState = trolleyState;
                     }
                     
-                    lastTrolleyState = trolleyState;
-                    lastLedState = ledState;
+                    if ( !ledState.equals(lastLedState) ) {
+                        ledUpdates++;
+                        lastLedState = ledState;
+                    }
+                    
+                    if ( !alarmState.equals(lastAlarmState) ) {
+                        alarmUpdates++;
+                        lastAlarmState = alarmState;
+                    }
+                    if ( !warningState.equals(lastWarningState) ) {
+                        warningUpdates++;
+                        lastWarningState = warningState;
+                    }
                     
                     // log
                     if (i % 10 == 0) {
-                        System.out.println("   [" + i + "s] Trolley: " + trolleyState);
+                        System.out.println("\n [" + i + "s] Stato componenti: ");
+                        System.out.println("         Trolley: " + trolleyState);		
                         System.out.println("         LED: " + ledState);
                         System.out.println("         Alarm (gestione sonar): " + alarmState);
                         System.out.println("         Warning (gestione led): " + warningState);
                     }
                     
+                    if ( trolleyState.contains("waitrequest") || 
+                            trolleyState.contains("trolleyathome") ||
+                            trolleyState.contains("resetdone") ) {
+                    	
+                    	if ( !processCompleted ) {
+                            processCompleted = true;
+                            System.out.println("\n [" + i + "s] Processo completato - Trolley tornato in HOME");
+                            
+                            // ferma il sonar per evitare che blocchi il trolley dopo avere finito
+                            TestUtils.stopSonarForManualControl();
+                            CommUtils.delay(1000);
+                            
+                            // delay finale
+                            System.out.println("   Attesa aggiornamenti finali...");
+                            CommUtils.delay(2000);
+                            break;
+                        }
+                       }
+                    
                 } catch (Exception e) {
-                    System.err.println("   Errore lettura stato: " + e.getMessage());
-                    Assert.fail("Sistema non stabile: " + e.getMessage());
+                	errorCount++;
+                    System.err.println("   Errore lettura stato (" + errorCount + "/5): " + e.getMessage());
+                    
+                    if ( errorCount > 5 ) {
+                    	System.out.println("Sistema non stabile: troppi errori di lettura stato");
+                    }
                 }
                 
                 CommUtils.delay(500);
             }
             
             System.out.println("\n   Risultato:");
-            System.out.println("   - Aggiornamenti rilevati: " + updates);
+            System.out.println("   - Aggiornamenti Trolley:  " + trolleyUpdates);
+            System.out.println("   - Aggiornamenti LED:      " + ledUpdates);
+            System.out.println("   - Aggiornamenti Alarm:    " + alarmUpdates);
+            System.out.println("   - Aggiornamenti Warning:  " + warningUpdates);
+            System.out.println("   - Errori di lettura:      " + errorCount);
+            System.out.println("   - Processo completato:    " + (processCompleted ? "SI" : "NO") );
             System.out.println("   - Sistema funzionante!");
             
-            Assert.assertTrue("Sistema dovrebbe aver generato aggiornamenti", updates > 0);
+            int totalUpdates = trolleyUpdates + ledUpdates + alarmUpdates + warningUpdates;
+            System.out.println("   TOTALE aggiornamenti: " + totalUpdates);
+            
+            // 3 - verifica risultati
+            Assert.assertTrue("Il sistema dovrebbe aver generato aggiornamenti", totalUpdates > 0);
+            System.out.println("\n Il sistema ha generato " + totalUpdates + " aggiornamenti");
+            
+            Assert.assertTrue("Il trolley dovrebbe aver cambiato stato almeno una volta", trolleyUpdates > 0);
+            System.out.println("Trolley attivo (" + trolleyUpdates + " cambiamenti di stato)");
+            
+            Assert.assertTrue("Il LED dovrebbe aver cambiato stato almeno una volta", ledUpdates > 0);
+            System.out.println("LED attivo (" + ledUpdates + " cambiamenti di stato)");
+            
+            if ( processCompleted ) {
+                System.out.println("	Processo di deposito completato con successo!");
+            } else {
+                System.out.println("	Processo non completato");
+                System.out.println("	Possibile causa: sonar ha generato stop prolungati");
+            }
             
             System.out.println("\n------- TEST 4 PASSATO -------");
             

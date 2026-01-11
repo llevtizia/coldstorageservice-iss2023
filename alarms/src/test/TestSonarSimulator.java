@@ -69,6 +69,7 @@ public class TestSonarSimulator {
             System.out.println("   Stato iniziale: " + initialState);
             
             boolean eventDetected = false;
+            int count = 0;
             
             for ( int i = 0; i < 10; i++ ) {
                 CommUtils.delay(500);
@@ -77,11 +78,12 @@ public class TestSonarSimulator {
                 // verifica che lo stato cambi (riceve eventi)
                 if ( !currentState.equals( initialState ) || currentState.contains( "distance" ) ) {
                     eventDetected = true;
-                    System.out.println("	Evento rilevato: " + currentState);
-                    break;
+                    count++;
+                    System.out.println("	Evento rilevato: " + currentState);;
                 }
             }
             
+            System.out.println("   Eventi generati: " + count);
             Assert.assertTrue("Il sonar dovrebbe generare eventi", eventDetected);
             System.out.println("\n------- TEST 1 PASSATO -------");
             
@@ -113,83 +115,34 @@ public class TestSonarSimulator {
             
             // 3 - verifica che non stia più generando eventi
             System.out.println("Il sonar è fermo e non dovrebbe generare eventi");
-            String state1 = TestUtils.getCurrentAlarmdeviceState();
-            CommUtils.delay(2000);
-            String state2 = TestUtils.getCurrentAlarmdeviceState();
+            System.out.println("	Monitoraggio...");
             
-            System.out.println("Primo stato dopo stop (t=0): " + state1);
-            System.out.println("Secondo stato dopo stop (t=2): " + state2);
+            String lastState = TestUtils.getCurrentSonarState();
+            int changeCount = 0;
             
-            // Se il sonar è fermo, lo stato non dovrebbe cambiare 
-            Assert.assertEquals("Lo stato dovrebbe essere stabile dopo stop", state1, state2);
-            
-            System.out.println("Sonar fermato, stato stabile");
-            System.out.println("\n------- TEST 3 PASSATO -------");
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail("Test fallito: " + e.getMessage());
-        }
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-    
-    @Test
-    public void testSonarGeneratesDistanceEvents() {
-        try {
-            System.out.println("------- TEST 2: Sonar genera eventi distance -------");
-            
-            // 1 - avvia il sonar
-            IApplMessage startMsg = CommUtils.buildDispatch("test", "sonarstart", "sonarstart(test_distance)", TestUtils.ALARMS_CONTEXT);
-            TestUtils.getAlarmsConnection().forward(startMsg);
-            
-            // 2 - monitora alarmdevice per eventi distance
-            String alarmUrl = "coap://localhost:8025/ctxalarms/alarmdevice";
-            CoapClient alarmClient = new CoapClient(alarmUrl);
-            
-            boolean distanceEventDetected = false;
-            
-            for (int i = 0; i < 20; i++) {
-                CoapResponse response = alarmClient.get();
-                if (response != null) {
-                    String alarmState = response.getResponseText();
-                    System.out.println("Monitoraggio [" + i + "]: " + alarmState);
-                    
-                    // cerco eventi distance
-                    if (alarmState.contains("distance") || alarmState.contains("the sonar works")) {
-                        distanceEventDetected = true;
-                        break;
-                    }
-                }
+            for ( int i = 0; i < 10; i++ ) { 
                 CommUtils.delay(500);
+                String currentState = TestUtils.getCurrentSonarState();
+                
+                if ( !currentState.equals(lastState) ) {
+                    changeCount++;
+                    System.out.println("  [" + i + "s] Cambio rilevato: " + currentState);
+                    lastState = currentState;
+                }
             }
             
-            Assert.assertTrue("Il sonar dovrebbe generare eventi distance", distanceEventDetected);
-            System.out.println("TEST PASSATO: Sonar genera eventi distance");
+            System.out.println("\nCambiamenti rilevati: " + changeCount);
+            
+            // Se il sonar è fermo, non dovrebbero esserci cambiamenti
+            Assert.assertEquals("Il sonar fermo non dovrebbe generare cambiamenti", 0, changeCount);
+            
+            System.out.println("Sonar fermato correttamente!");
+            System.out.println("\n------- TEST 2 PASSATO -------");
             
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail("Test fallito: " + e.getMessage());
         }
     }
-    
-    */
-
     	
 }

@@ -472,6 +472,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						forward("disengage", "disengage(trolley)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name  disengaged")
 						delay(1000) 
+						 System.exit(0)  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

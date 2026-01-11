@@ -82,8 +82,8 @@ public class TestSonarIntegration {
                 CommUtils.delay(500);
             }
             
-            System.out.println("Il sistema ha operato senza crash");
-            System.out.println("\n------- TEST INT-1 PASSATO -------");
+            System.out.println("Il sistema ha operato senza problemi");
+            System.out.println("\n------- TEST 1 PASSATO -------");
             
         } catch (Exception e) {
                 e.printStackTrace();
@@ -137,7 +137,7 @@ public class TestSonarIntegration {
                      } else if (stopCount == 2) {
                          secondStopTime = currentTime;
                          long mintObserved = (secondStopTime - firstStopTime) / 1000;
-                         System.out.println("   [" + i + "s] ⚠ SECONDO STOP rilevato");
+                         System.out.println("   [" + i + "s] SECONDO STOP rilevato");
                          System.out.println("	Tempo tra stop: " + mintObserved + " secondi");
                          
                          if ( mintObserved >= 5 ) {
@@ -145,14 +145,14 @@ public class TestSonarIntegration {
                          } else {
                              System.out.println("MINT NON RISPETTATO ( < 5 secondi )");
                          }
-                         break; // Abbiamo i dati che servono
+                         break; // cerca solo due stop
                      }
                  }
                  
                  wasMoving = !isStopped; // se non è fermo si sta muovendo -> il prossimo stop arriva al trolley in movimento
                  
                  // log periodico
-                 if (i % 10 == 0) {
+                 if (i % 5 == 0) {
                      System.out.println("   [" + i + "s] " + trolleyState);
                  }
                  
@@ -174,7 +174,7 @@ public class TestSonarIntegration {
              } 
              
              else if (stopCount == 1) {
-                 System.out.println("   - Solo 1 stop in 30 secondi");
+                 System.out.println("   - Solo 1 stop ");
                  System.out.println("   - Serve più tempo per secondo stop");
              } 
              
@@ -220,7 +220,7 @@ public class TestSonarIntegration {
                  
                  if ( state.contains("stopped") ) {
                      stopDetected = true;
-                     System.out.println("   [" + i + "s] ✓ STOP rilevato!");
+                     System.out.println("   [" + i + "s] STOP rilevato!");
                      break;
                  }
                  
@@ -238,9 +238,10 @@ public class TestSonarIntegration {
                  System.out.println("Attesa resume...");
                  boolean resumeDetected = TestUtils.waitForTrolleyNotState("stopped", 15);
                  
+                 Assert.assertTrue("Il trolley dovrebbe ripartire dopo lo stop", resumeDetected);
+                 
                  if ( resumeDetected ) {
                      System.out.println("Resume rilevata, trolley ripartito!");
-                     Assert.assertTrue("Ciclo stop/resume completato", true);
                  } else {
                      System.out.println(" Resume non rilevata entro 15 secondi");
                      System.out.println("Sonar potrebbe rimanere sotto DLIMIT -> aspettare per più tempo");
@@ -251,7 +252,7 @@ public class TestSonarIntegration {
                  System.out.println("Test inconclusivo");
              }
              
-             System.out.println("\n------- TEST INT-3 COMPLETATO -------");
+             System.out.println("\n------- TEST 3 COMPLETATO -------");
              
          } catch (Exception e) {
              e.printStackTrace();
