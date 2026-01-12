@@ -193,7 +193,7 @@ QActor coldstorageservice context ctxcoldstorageservice {
 			
 			 
 		} 
-	}
+	} 
 	Goto waitrequest
 	
 	// handle trolley

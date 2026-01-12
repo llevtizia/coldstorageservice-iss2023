@@ -33,6 +33,7 @@ function connectWebSocket() {
         socket.onopen = function() {
             // connessione riuscita
             console.log("WebSocket connessa");
+            showToast('Connesso al server', 'success', 2000);
         };
 
         socket.onmessage = function(event) {
@@ -142,6 +143,9 @@ function handleStoreAccepted(message) {
         // mostra messaggio di successo
         showStoreResponse(`Richiesta accettata! Ticket: ${ticket} per ${weight} kg`, "success");
 
+        // toast notification
+        showToast(`Ticket ${ticket} generato!`, 'success');
+
         // mostra il ticket con timer
         showTicket(ticket, weight);
 
@@ -171,6 +175,9 @@ function handleStoreRefused(message) {
         showStoreResponse(`Richiesta rifiutata!
             ${weight} kg supera lo spazio disponibile (${available} kg)`, "error");
 
+        // toast notification
+        showToast(`Richiesta rifiutata`, 'error');
+
     } else {
         console.error("Formato messaggio non valido:", message);
     }
@@ -190,6 +197,9 @@ function handleChargeTaken(message) {
         console.log(`Carico preso - Ticket: ${ticket}`);
 
         showTicketResponse(`Carico preso! Ticket ${ticket} processato con successo`, "success");
+
+        // toast notification
+        showToast(`Carico depositato!`, 'success');
 
         // nasconde display ticket
         hideTicket();
@@ -217,6 +227,9 @@ function handleTicketRefused(message) {
 
         showTicketResponse(`Ticket ${ticket} rifiutato! (Scaduto o non valido)`, "error");
 
+        // toast notification
+        showToast(`Ticket ${ticket} rifiutato`, 'error');
+
     } else {
         console.error("Formato messaggio non valido:", message);
     }
@@ -231,21 +244,21 @@ function handleCurrentlyStored(message) {
     const match = message.match(/currentlystored\s*\(\s*([\d.]+)\s*\)/);
 
     if (match) {
-            const weight = parseFloat(match[1]);
+        const weight = parseFloat(match[1]);
 
-            // validazione: peso deve essere tra 0 e MAXW
-            if (weight < 0 || weight > MAXW) {
-                console.warn(`Peso fuori range: ${weight} kg (max ${MAXW} kg)`);
-                return;
-            }
-
-            currentWeight = weight;
-            console.log(`Peso aggiornato: ${currentWeight} kg`);
-            updateWeightDisplay(currentWeight);
-
-        } else {
-            console.error("Formato messaggio non valido:", message);
+        // validazione: peso deve essere tra 0 e MAXW
+        if (weight < 0 || weight > MAXW) {
+            console.warn(`Peso fuori range: ${weight} kg (max ${MAXW} kg)`);
+            return;
         }
+
+        currentWeight = weight;
+        console.log(`Peso aggiornato: ${currentWeight} kg`);
+        updateWeightDisplay(currentWeight);
+
+    } else {
+        console.error("Formato messaggio non valido:", message);
+    }
 }
 
 
@@ -483,6 +496,9 @@ function handleTicketExpired() {
 
     showStoreResponse(`Ticket ${currentTicket} è scaduto!`, "error"); // mostra errore
     hideTicket(); // nasconde card ticket
+
+    // notifica
+    showToast(`Ticket ${currentTicket} scaduto!`, 'error');
 }
 
 
@@ -524,3 +540,30 @@ function debugState() {
 
 // funzione di debug eseguibile dalla console del browser
 window.debugState = debugState;
+
+// -----------------------------------------
+// 9 - TOAST NOTIFICATIONS
+// -----------------------------------------
+
+/**
+ * mostra una toast notification
+ * message -> messaggio da mostrare
+ * type -> tipo: "success", "error", "info"
+ * duration -> durata in ms (default: 3000)
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const result = type === 'success' ? 'OK!' : type === 'error' ? 'ERROR' : 'INFO';
+    toast.innerHTML = `<span style="font-size: 1.2rem;">${result}</span><span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
