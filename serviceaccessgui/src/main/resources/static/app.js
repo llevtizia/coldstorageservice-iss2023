@@ -1,83 +1,85 @@
-// ========================================
-// COLD STORAGE SERVICE - Frontend Logic
-// Sprint 3 - Letizia Mancini
+// -----------------------------------------
+// COLD STORAGE SERVICE - logica interfaccia
 // WebSocket Communication with Facade
-// ========================================
+// -----------------------------------------
 
-// Configurazione
-const WS_PATH = "ws://localhost:8091/accessgui";  // PORTA 8091
-const TICKETTIME = 15; // secondi
-const MAXW = 200; // kg
 
-// Variabili globali
-let socket = null;
-let currentTicket = null;
-let ticketExpiryTime = null;
-let timerInterval = null;
-let currentWeight = 0;
+// -----------------------------------------
+// 1 - CONFIGURAZIONE: costanti e variabili globali per l'applicazione
+// -----------------------------------------
+// costanti
+const WS_URL = "ws://localhost:8091/accessgui";    // URL WS PORTA 8091
+const TICKETTIME = 30;                              // tempo scadenza ticket
+const MAXW = 200;                                   // capacità massima cold room (kg)
 
-// ========================================
-// CONNESSIONE WEBSOCKET
-// ========================================
+// variabili globali
+let socket = null;              // connessione websocket
+let currentTicket = null;       // ticket corrente mostrato
+let ticketExpiryTime = null;    // timestamp scadenza ticket
+let timerInterval = null;       // intervallo countdown timer
+let currentWeight = 0;          // peso corrente nella coldroom
 
-/**
- * Inizializza la connessione WebSocket al server
- */
+// -----------------------------------------
+// 2 - CONNESSIONE WEBSOCKET
+// -----------------------------------------
+
+// Inizializza la connessione WebSocket al server
 function connectWebSocket() {
-    console.log("Connessione al WebSocket:", WS_PATH);
+    console.log("Connessione al WebSocket:", WS_URL); // creo la connessione
 
     try {
-        socket = new WebSocket(WS_PATH);
+        socket = new WebSocket(WS_URL);
 
         socket.onopen = function() {
-            console.log("✅ WebSocket connesso");
-            showMessage("Connesso al server", "success");
+            // connessione riuscita
+            console.log("WebSocket connessa");
         };
 
         socket.onmessage = function(event) {
-            console.log("📨 Messaggio ricevuto:", event.data);
+            // ricezione messaggio dal server
+            console.log("Messaggio ricevuto:", event.data);
             handleServerMessage(event.data);
         };
 
         socket.onerror = function(error) {
-            console.error("❌ Errore WebSocket:", error);
+            console.error("Errore WebSocket:", error);
             showMessage("Errore di connessione", "error");
         };
 
         socket.onclose = function() {
-            console.log("🔌 WebSocket disconnesso");
+            console.log("WebSocket disconnessa");
             showMessage("Connessione persa. Riconnessione in corso...", "error");
-            // Riconnessione automatica dopo 3 secondi
+            // riconnessione automatica dopo 3 secondi
             setTimeout(connectWebSocket, 3000);
         };
 
     } catch (error) {
-        console.error("❌ Errore creazione WebSocket:", error);
+        console.error("Errore creazione WebSocket:", error);
         showMessage("Impossibile connettersi al server", "error");
     }
 }
 
 /**
- * Invia un messaggio tramite WebSocket
- * @param {string} message - Messaggio da inviare
- */
+* invia un messaggio tramite WebSocket
+* messaggio da inviare -> string message
+*/
 function sendMessage(message) {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("📤 Invio messaggio:", message);
+        console.log("Invio messaggio:", message);
         socket.send(message);
     } else {
-        console.error("❌ WebSocket non connesso");
+        console.error("WebSocket non connessa");
         showMessage("Non connesso al server", "error");
     }
 }
 
-// ========================================
-// GESTIONE MESSAGGI DAL SERVER
-// ========================================
+// -----------------------------------------
+// 3 - GESTIONE MESSAGGI DAL SERVER
+// -----------------------------------------
 
 /**
- * Processa i messaggi ricevuti dal server
- * @param {string} message - Messaggio ricevuto
+ * processa i messaggi ricevuti dal server
+ * messaggio ricevuto -> string message
  */
 function handleServerMessage(message) {
     console.log("🔍 Processing:", message);

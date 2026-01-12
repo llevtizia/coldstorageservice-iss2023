@@ -1,8 +1,8 @@
 {
-  "host":"localhost",
-  "port":"8015",
-  "context":"ctxcoldstorageservice",
+  "host": "localhost",
+  "port": "8015",
+  "context": "ctxcoldstorageservice",
   "facade": "coldstorageservice",
-  "facadeport":"8091",
-  "sysdescr":"sprint-3"
+  "facadeport": "8091",
+  "sysdescr": "coldstorageservice-sprint3"
 }
