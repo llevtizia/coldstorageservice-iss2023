@@ -9,7 +9,7 @@
 // -----------------------------------------
 // costanti
 const WS_URL = "ws://localhost:8091/accessgui";    // URL WS PORTA 8091
-const TICKETTIME = 30;                              // tempo scadenza ticket
+const TICKETTIME = 30;                              // tempo scadenza ticket (aumentato da 15 a 30)
 const MAXW = 200;                                   // capacità massima cold room (kg)
 
 // variabili globali
@@ -82,252 +82,283 @@ function sendMessage(message) {
  * messaggio ricevuto -> string message
  */
 function handleServerMessage(message) {
-    console.log("🔍 Processing:", message);
+    console.log("Processing:", message); // chiamo la funzione handler specifica per ogni messaggio
 
-    // Store Request - Accettata
+    // store accepted (prima richiesta accettata)
     if (message.includes("storeaccepted")) {
         handleStoreAccepted(message);
     }
-    // Store Request - Rifiutata
+    // store refused (prima richiesta rifiutata)
     else if (message.includes("storerefused")) {
         handleStoreRefused(message);
     }
-    // Ticket Request - Accettata (carico preso)
+    // ticket request accettata e carico preso (seconda richiesta accettata)
     else if (message.includes("chargetaken")) {
         handleChargeTaken(message);
     }
-    // Ticket Request - Rifiutata
+    // ticket request rifiutata (seconda richiesta rifiutata)
     else if (message.includes("ticketrefused")) {
         handleTicketRefused(message);
     }
-    // Aggiornamento peso corrente (se implementato)
-    else if (message.includes("currentlyStored")) {
+    // aggiornamento peso corrente
+    else if (message.includes("currentlystored")) {
         handleCurrentlyStored(message);
     }
-    // Altri messaggi
+    // altri messaggi
     else {
-        console.log("ℹ️ Messaggio generico:", message);
+        console.log("Messaggio generico:", message);
     }
 }
 
 /**
- * Gestisce risposta storeaccepted(TICKET, KG)
+ * gestisce risposta storeaccepted( TICKET, KG )
  */
 function handleStoreAccepted(message) {
-    // Estrae ticket e peso dal messaggio
-    // Formato: storeaccepted(1, 50.0)
+    // estrae ticket e peso dal messaggio
+    // formato: "storeaccepted(1, 50.0)"
     const match = message.match(/storeaccepted\s*\(\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
+    /**
+    * storeaccepted     cerca esattamente la stringa (in minuscolo)
+    * \s*               zero o più spazi bianchi (spazio, tab, newline)
+    * \(                parentesi aperta (\ serve come escape)
+    * \s*               zero o più spazi bianchi
+    * (\d+)             () -> gruppo di cattura che memorizza il contenuto per estrarre dati -> match[1]
+    *                   \d -> cifra (0-9), + -> una o più volte
+    *                   cattura il numero del ticket (es. 1, 12, 123)
+    * \s*,\s*           \s* -> zero o più spazi bianchi, , -> carattere virgola, altri spazi
+    *                   accetta (1, 50.0) o (1,50.0) o (1 , 50.0)
+    * ([\d.]+)          [] -> classe di caratteri: accetta qualsiasi carattere tra questi -> in questo caso, cifre o punto
+    *                   accetta "50", "50.0", "100.000" -> cattura peso con decimali
+    * \s*               spazi bianchi
+    * \)                parentesi chiusa (\ serve come escape)
+    */
 
     if (match) {
-        const ticket = match[1];
-        const weight = parseFloat(match[2]);
+        const ticket = match[1]; // "1"
+        const weight = parseFloat(match[2]); // 50.0
 
-        console.log(`✅ Richiesta accettata - Ticket: ${ticket}, Peso: ${weight} kg`);
+        console.log(`Richiesta accettata! Ticket: ${ticket}, Peso: ${weight} kg`);
 
-        // Mostra messaggio di successo
-        showStoreResponse(`✅ Richiesta accettata! Ticket: ${ticket} per ${weight} kg`, "success");
+        // mostra messaggio di successo
+        showStoreResponse(`Richiesta accettata! Ticket: ${ticket} per ${weight} kg`, "success");
 
-        // Mostra il ticket con timer
+        // mostra il ticket con timer
         showTicket(ticket, weight);
 
-        // Reset form
+        // reset form
         document.getElementById("storeForm").reset();
 
     } else {
-        console.error("❌ Formato messaggio non valido:", message);
+        console.error("Formato messaggio non valido:", message);
     }
 }
 
 /**
- * Gestisce risposta storerefused(KG)
+ * gestisce risposta storerefused(KG)
  */
 function handleStoreRefused(message) {
-    // Estrae peso dal messaggio
-    // Formato: storerefused(50.0)
+    // estrae peso dal messaggio
+    // formato: storerefused(50.0)
     const match = message.match(/storerefused\s*\(\s*([\d.]+)\s*\)/);
 
     if (match) {
         const weight = parseFloat(match[1]);
-
-        console.log(`❌ Richiesta rifiutata - Peso: ${weight} kg`);
-
-        // Calcola spazio disponibile
+        // calcola spazio disponibile
         const available = MAXW - currentWeight;
 
-        showStoreResponse(
-            `❌ Richiesta rifiutata! ${weight} kg supera lo spazio disponibile (${available} kg)`,
-            "error"
-        );
+        console.log(`Richiesta rifiutata - Peso: ${weight} kg`);
+
+        showStoreResponse(`Richiesta rifiutata!
+            ${weight} kg supera lo spazio disponibile (${available} kg)`, "error");
 
     } else {
-        console.error("❌ Formato messaggio non valido:", message);
+        console.error("Formato messaggio non valido:", message);
     }
 }
 
 /**
- * Gestisce risposta chargetaken(TICKET)
+ * gestisce risposta chargetaken(TICKET)
  */
 function handleChargeTaken(message) {
-    // Estrae ticket dal messaggio
-    // Formato: chargetaken(1)
+    // estrae ticket dal messaggio
+    // formato: chargetaken(1)
     const match = message.match(/chargetaken\s*\(\s*(\d+)\s*\)/);
 
     if (match) {
         const ticket = match[1];
 
-        console.log(`✅ Carico preso - Ticket: ${ticket}`);
+        console.log(`Carico preso - Ticket: ${ticket}`);
 
-        showTicketResponse(`✅ Carico preso! Ticket ${ticket} processato con successo`, "success");
+        showTicketResponse(`Carico preso! Ticket ${ticket} processato con successo`, "success");
 
-        // Nascondi display ticket
+        // nasconde display ticket
         hideTicket();
 
-        // Reset form
+        // reset form
         document.getElementById("ticketForm").reset();
 
-        // Aggiorna stato (opzionale)
-        refreshStatus();
-
     } else {
-        console.error("❌ Formato messaggio non valido:", message);
+        console.error("Formato messaggio non valido:", message);
     }
 }
 
 /**
- * Gestisce risposta ticketrefused(TICKET)
+ * gestisce risposta ticketrefused(TICKET)
  */
 function handleTicketRefused(message) {
-    // Estrae ticket dal messaggio
-    // Formato: ticketrefused(1)
+    // estrae ticket dal messaggio
+    // formato: ticketrefused(1)
     const match = message.match(/ticketrefused\s*\(\s*(\d+)\s*\)/);
 
     if (match) {
         const ticket = match[1];
 
-        console.log(`❌ Ticket rifiutato: ${ticket}`);
+        console.log(`Ticket rifiutato: ${ticket}`);
 
-        showTicketResponse(`❌ Ticket ${ticket} rifiutato! (Scaduto o non valido)`, "error");
+        showTicketResponse(`Ticket ${ticket} rifiutato! (Scaduto o non valido)`, "error");
 
     } else {
-        console.error("❌ Formato messaggio non valido:", message);
+        console.error("Formato messaggio non valido:", message);
     }
 }
 
 /**
- * Gestisce aggiornamento currentlyStored(KG)
+ * gestisce aggiornamento currentlystored(KG)
  */
 function handleCurrentlyStored(message) {
-    // Estrae peso dal messaggio
-    // Formato: currentlyStored(50.0)
-    const match = message.match(/currentlyStored\s*\(\s*([\d.]+)\s*\)/);
+    // estrae peso dal messaggio
+    // formato: currentlystored(50.0)
+    const match = message.match(/currentlystored\s*\(\s*([\d.]+)\s*\)/);
 
     if (match) {
-        currentWeight = parseFloat(match[1]);
+            const weight = parseFloat(match[1]);
 
-        console.log(`📊 Peso aggiornato: ${currentWeight} kg`);
+            // validazione: peso deve essere tra 0 e MAXW
+            if (weight < 0 || weight > MAXW) {
+                console.warn(`Peso fuori range: ${weight} kg (max ${MAXW} kg)`);
+                return;
+            }
 
-        // Aggiorna UI
-        updateWeightDisplay(currentWeight);
+            currentWeight = weight;
+            console.log(`Peso aggiornato: ${currentWeight} kg`);
+            updateWeightDisplay(currentWeight);
 
-    } else {
-        console.error("❌ Formato messaggio non valido:", message);
-    }
+        } else {
+            console.error("Formato messaggio non valido:", message);
+        }
 }
 
-// ========================================
-// INVIO RICHIESTE
-// ========================================
+
+// -----------------------------------------
+// 4 - INVIO RICHIESTE AL SERVER
+// -----------------------------------------
 
 /**
- * Invia richiesta di deposito
- * @param {Event} event - Evento submit del form
+ * invia richiesta di deposito
+ * evento submit del form
  */
 function submitStoreRequest(event) {
-    event.preventDefault(); // Previene submit normale
+    event.preventDefault(); // stop submit del form perché invio i dati sulla websocket -> blocco reload pagina
 
     const weightInput = document.getElementById("weightInput");
     const weight = parseInt(weightInput.value);
 
-    // Validazione
+    // validazione
     if (!weight || weight < 1 || weight > MAXW) {
-        showStoreResponse(`❌ Peso non valido! Inserire un valore tra 1 e ${MAXW} kg`, "error");
+        showStoreResponse(`Peso non valido! Inserire un valore tra 1 e ${MAXW} kg`, "error");
         return;
     }
 
-    // Verifica connessione
+    // verifica connessione
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-        showStoreResponse("❌ Non connesso al server!", "error");
+        showStoreResponse("Non connesso al server!", "error");
         return;
     }
 
-    // Costruisce e invia messaggio
-    // Formato: request/storerequest/storerequest(WEIGHT)
+    // costruisce e invia messaggio
+    // formato: request/storerequest/storerequest(WEIGHT)
     const message = `request/storerequest/storerequest(${weight})`;
     sendMessage(message);
 
     // Mostra messaggio di attesa
-    showStoreResponse(`⏳ Invio richiesta per ${weight} kg...`, "success");
+    showStoreResponse(`Invio richiesta per ${weight} kg...`, "success");
 }
 
 /**
- * Invia ticket
- * @param {Event} event - Evento submit del form
+ * invia ticket
+ * evento submit del form
  */
 function submitTicketRequest(event) {
-    event.preventDefault(); // Previene submit normale
+    event.preventDefault(); // come per store request
 
     const ticketInput = document.getElementById("ticketInput");
     const ticket = parseInt(ticketInput.value);
 
-    // Validazione
-    if (!ticket || ticket < 1) {
-        showTicketResponse("❌ Numero ticket non valido!", "error");
+    // validazione
+    if ( !ticket || ticket < 1 ) {
+        showTicketResponse("Numero ticket non valido!", "error");
         return;
     }
 
-    // Verifica connessione
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        showTicketResponse("❌ Non connesso al server!", "error");
+    // verifica connessione
+    if ( !socket || socket.readyState !== WebSocket.OPEN ) {
+        showTicketResponse("Non connesso al server!", "error");
         return;
     }
 
-    // Costruisce e invia messaggio
-    // Formato: request/ticketrequest/ticketrequest(TICKET)
+    // costruisce e invia messaggio
+    // formato: request/ticketrequest/ticketrequest(TICKET)
     const message = `request/ticketrequest/ticketrequest(${ticket})`;
     sendMessage(message);
 
     // Mostra messaggio di attesa
-    showTicketResponse(`⏳ Invio ticket ${ticket}...`, "success");
+    showTicketResponse(`Invio ticket ${ticket}...`, "success");
 }
 
-/**
- * Richiede aggiornamento stato
- */
-function refreshStatus() {
-    console.log("🔄 Richiesta aggiornamento stato");
-    // L'aggiornamento avviene automaticamente via CoAP Observer
-    // Questa funzione è qui per compatibilità con il vecchio app.js
-}
 
-// ========================================
-// GESTIONE UI
-// ========================================
+
+// -----------------------------------------
+// 5 - GESTIONE UI
+// -----------------------------------------
 
 /**
- * Aggiorna display del peso corrente
- * @param {number} weight - Peso corrente in kg
+ * aggiorna display del peso corrente
+ * peso corrente in kg -> numero
  */
 function updateWeightDisplay(weight) {
     const currentWeightEl = document.getElementById("currentWeight");
-    currentWeightEl.textContent = `${weight} kg`;
 
-    console.log(`📊 Display aggiornato: ${weight} kg`);
+    // flash quando cambia
+    currentWeightEl.classList.add('updating');
+    // aggiorna testo
+    currentWeightEl.textContent = `${weight} kg`;
+    // indicatore colore
+    const percentage = (weight / MAXW) * 100;
+
+    // rimuovi classi colore precedenti
+    currentWeightEl.classList.remove('weight-low', 'weight-medium', 'weight-high');
+
+    // aggiungi classe appropriata
+    if (percentage < 50) {
+        currentWeightEl.classList.add('weight-low');  // verde
+    } else if (percentage < 80) {
+        currentWeightEl.classList.add('weight-medium');  // arancione
+    } else {
+        currentWeightEl.classList.add('weight-high');  // rosso
+    }
+
+    // rimuovi classe animazione dopo 500ms
+    setTimeout(() => {
+        currentWeightEl.classList.remove('updating');
+    }, 500);
+
+    console.log(`Display aggiornato: ${weight} kg (${percentage.toFixed(1)}%)`);
 }
 
 /**
- * Mostra messaggio di risposta per store request
- * @param {string} message - Messaggio da mostrare
- * @param {string} type - Tipo: "success" o "error"
+ * mostra il messaggio di risposta per store request sotto il form
+ * messaggio da mostrare -> stringa
+ * tipo: "success" o "error"
  */
 function showStoreResponse(message, type) {
     const responseEl = document.getElementById("storeResponse");
@@ -336,9 +367,8 @@ function showStoreResponse(message, type) {
 }
 
 /**
- * Mostra messaggio di risposta per ticket request
- * @param {string} message - Messaggio da mostrare
- * @param {string} type - Tipo: "success" o "error"
+ * mostra messaggio di risposta per ticket request
+ * uguale alla store response
  */
 function showTicketResponse(message, type) {
     const responseEl = document.getElementById("ticketResponse");
@@ -347,45 +377,44 @@ function showTicketResponse(message, type) {
 }
 
 /**
- * Mostra messaggio generico (usato per connessione WebSocket)
- * @param {string} message - Messaggio
- * @param {string} type - Tipo
+ * mostra messaggio generico (usato per connessione WebSocket)
+ * messaggio, tipo -> stringhe
  */
 function showMessage(message, type) {
-    console.log(`💬 ${type.toUpperCase()}: ${message}`);
+    console.log(`${type.toUpperCase()}: ${message}`);
     // Potremmo aggiungere un toast notification se vuoi
 }
 
-// ========================================
-// GESTIONE TICKET
-// ========================================
+
+// -----------------------------------------
+// 6 - GESTIONE TICKET
+// -----------------------------------------
 
 /**
- * Mostra il ticket ricevuto con timer
- * @param {string} ticket - Numero ticket
- * @param {number} weight - Peso in kg
+ * mostra il ticket ricevuto con timer
+ * parametri -> numero ticket, peso in kg
  */
 function showTicket(ticket, weight) {
-    // Salva ticket corrente
+    // salva ticket corrente e timestamp scadenza
     currentTicket = ticket;
-    ticketExpiryTime = Date.now() + (TICKETTIME * 1000);
+    ticketExpiryTime = Date.now() + (TICKETTIME * 1000); // ticket time = 30 ms * 1000 = 30 secondi
 
-    // Aggiorna UI
+    // aggiorna UI
     document.getElementById("ticketNumber").textContent = ticket;
     document.getElementById("ticketWeight").textContent = `${weight} kg`;
-    document.getElementById("ticketDisplay").style.display = "block";
+    document.getElementById("ticketDisplay").style.display = "block"; // visualizza la card del ticket
 
-    // Auto-compila campo ticket
+    // precompila il campo ticket
     document.getElementById("ticketInput").value = ticket;
 
-    // Avvia timer
+    // avvia countdown
     startTicketTimer();
 
-    console.log(`🎫 Ticket mostrato: ${ticket}, scadenza: ${TICKETTIME}s`);
+    console.log(`Ticket mostrato: ${ticket}, scadenza: ${TICKETTIME}s`);
 }
 
 /**
- * Nascondi ticket display
+ * nasconde ticket display e ferma il timer
  */
 function hideTicket() {
     document.getElementById("ticketDisplay").style.display = "none";
@@ -393,38 +422,42 @@ function hideTicket() {
     ticketExpiryTime = null;
     stopTicketTimer();
 
-    console.log("🎫 Ticket nascosto");
+    console.log("Ticket nascosto");
 }
 
 /**
- * Avvia countdown timer del ticket
+ * avvia countdown timer del ticket
  */
 function startTicketTimer() {
-    // Ferma timer precedente se esiste
+    // ferma timer precedente se esiste
     stopTicketTimer();
 
     timerInterval = setInterval(() => {
-        if (!ticketExpiryTime) {
-            stopTicketTimer();
-            return;
+        if (!ticketExpiryTime) { // se ticketExpiryTime viene cancellato prima che il timer si fermi -> il ticket è stato gestito
+            stopTicketTimer();   // ticketExpiryTime = null in hideTicket (ticket processato con successo/ticket scaduto)
+            return;              // stoppo il timer ed esco per sicurezza
         }
 
+        // se arriva qui ticketExpiryTime esiste
         const remaining = Math.max(0, ticketExpiryTime - Date.now());
         const seconds = Math.ceil(remaining / 1000);
 
-        if (seconds <= 0) {
-            // Ticket scaduto
+        if (seconds <= 0) { // se il tempo rimasto è finito
+            // il ticket è scaduto
             handleTicketExpired();
         } else {
-            // Aggiorna display
+            // aggiorna display e calcola minuti e secondi
             const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
+            const secs = seconds % 60; // quanti secondi sono rimasti
+            // aggiorna display
             const timerEl = document.getElementById("ticketTimer");
             timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            // formato `${minutes}:${secs}` tipo orologio digitale
+            // converto il numero in stringa -> padding con zeri (aggiungo zeri a sinistra per avere una stringa lunga 2)
 
-            // Cambia colore se < 5 secondi
+            // cambia colore se < 5 secondi
             if (seconds <= 5) {
-                timerEl.classList.add("warning");
+                timerEl.classList.add("warning"); // arancione + pulse
             } else {
                 timerEl.classList.remove("warning");
             }
@@ -433,7 +466,7 @@ function startTicketTimer() {
 }
 
 /**
- * Ferma timer
+ * ferma timer
  */
 function stopTicketTimer() {
     if (timerInterval) {
@@ -443,49 +476,51 @@ function stopTicketTimer() {
 }
 
 /**
- * Gestisce scadenza ticket
+ * gestisce scadenza ticket
  */
 function handleTicketExpired() {
-    console.log(`⏰ Ticket ${currentTicket} SCADUTO!`);
+    console.log(`Ticket ${currentTicket} SCADUTO!`);
 
-    showStoreResponse(`⏰ Ticket ${currentTicket} è scaduto!`, "error");
-    hideTicket();
+    showStoreResponse(`Ticket ${currentTicket} è scaduto!`, "error"); // mostra errore
+    hideTicket(); // nasconde card ticket
 }
 
-// ========================================
-// INIZIALIZZAZIONE
-// ========================================
+
+// -----------------------------------------
+// 7 - INIZIALIZZAZIONE
+// -----------------------------------------
 
 /**
- * Inizializza l'applicazione quando la pagina è caricata
+ * inizializza l'applicazione quando la pagina è caricata -> entry point
+ * eseguito al caricamento della pagina
  */
 window.addEventListener('load', () => {
-    console.log("🚀 Inizializzazione applicazione...");
+    console.log("Inizializzazione applicazione...");
 
-    // Connetti WebSocket
+    // connetti WebSocket
     connectWebSocket();
 
-    // Imposta peso iniziale
+    // imposta peso iniziale
     updateWeightDisplay(0);
 
-    console.log("✅ Applicazione pronta");
+    console.log("Applicazione pronta");
 });
 
-// ========================================
-// UTILITY
-// ========================================
+// -----------------------------------------
+// 8 - UTILITY
+// -----------------------------------------
 
 /**
- * Debug: stampa stato corrente
+ * debug: stampa stato corrente
  */
 function debugState() {
-    console.log("=== DEBUG STATE ===");
+    console.log("----- DEBUG STATE -----");
     console.log("WebSocket:", socket ? socket.readyState : "null");
     console.log("Current Weight:", currentWeight);
     console.log("Current Ticket:", currentTicket);
     console.log("Ticket Expiry:", ticketExpiryTime ? new Date(ticketExpiryTime) : "null");
-    console.log("==================");
+    console.log("-----------------------");
 }
 
-// Esponi funzione debug globalmente per console
+// funzione di debug eseguibile dalla console del browser
 window.debugState = debugState;

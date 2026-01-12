@@ -31,7 +31,7 @@ Dispatch gotakecharge	: gotakecharge( X, Y )
 Dispatch statustrolley  : statustrolley( X, Y )
 //-------------------------------------------------------------------------------
   
-// Sprint 2 + 3 
+// Sprint 2 
 Event alarm				: alarm( X ) //stop the basicrobot
 Dispatch stoptrolley	: stoptrolley( X )
 Dispatch resumetrolley	: resumetrolley( X )
@@ -42,25 +42,18 @@ Dispatch giveup   		: giveup( X )
 Dispatch restart		: restart( X ) // per ripartire dopo resume
 Dispatch reset			: reset( X )	// reset per test così non si ferma nel mezzo
 
+// Sprint 3 
+Dispatch currentlystored : currentlystored( KG ) // per aggiornare il peso nella cold room e visualizzarlo nell'interfaccia
+
+
+
 Context ctxcoldstorageservice ip [host="localhost" port=8015] 
 Context ctxbasicrobot         ip [host="127.0.0.1" port=8020]
 
 ExternalQActor basicrobot context ctxbasicrobot
   
   
-/* ---------------------------------------------------------------------------------
- * SPRINT 3: ServiceAccessGUI sostituita da applicazione web (Facade + Spring Boot)
- * ---------------------------------------------------------------------------------
- * Il QActor serviceaccessgui è stato rimosso e sostituito da:
- * - Frontend: qakFacadeGUI.html + app.js + styles.css
- * - Backend: Spring Boot Facade (porta 8091)
- * - Comunicazione: WebSocket (GUI ↔ Facade) + TCP (Facade ↔ coldstorageservice)
- * ---------------------------------------------------------------------------------
- */ 
 
-
- 
- 
 // 2 - coldstorageservice
 QActor coldstorageservice context ctxcoldstorageservice {
 	
@@ -84,6 +77,9 @@ QActor coldstorageservice context ctxcoldstorageservice {
 		
 		printCurrentMessage
 		println("$name START ") color green
+		
+		// aggiorna peso corrente nella cold room
+		updateResource[# "currentlystored($CurrentLoad)" #]
 	}
 	Goto waitrequest 
 	  
@@ -133,6 +129,11 @@ QActor coldstorageservice context ctxcoldstorageservice {
 				
 				replyTo storerequest with storeaccepted : storeaccepted( $TicketNumber, $LoadToStore )
 				[# TicketNumber = TicketNumber + 1 #]
+				
+				// aggiorna peso corrente nella cold room
+				updateResource[# "currentlystored($CurrentLoad)" #]
+				println("$name | Updated current weight: $CurrentLoad kg") color cyan
+				
 			} else {
 				println("$name refusing load of $LoadToStore kg") color green
 				replyTo storerequest with storerefused : storerefused( $LoadToStore  )
@@ -184,6 +185,10 @@ QActor coldstorageservice context ctxcoldstorageservice {
 					list.remove(request)
         			println(list) 
 				#]
+				
+				// aggiorna peso corrente nella cold room
+				updateResource[# "currentlystored($CurrentLoad)" #]
+				println("$name | Updated current weight: $CurrentLoad kg") color cyan
 			}
 			
 			 
@@ -760,14 +765,15 @@ QActor trolley context ctxcoldstorageservice {
 	
 	  
 /* ---------------------------------------------------------------------------------
- * SPRINT 3: ServiceAccessGUI sostituita da applicazione web (Facade + Spring Boot)
+ * 1 - ServiceAccessGUI sostituita da applicazione web (Facade + Spring Boot)
  * ---------------------------------------------------------------------------------
  * Il QActor serviceaccessgui è stato rimosso e sostituito da:
  * - Frontend: qakFacadeGUI.html + app.js + styles.css
  * - Backend: Spring Boot Facade (porta 8091)
- * - Comunicazione: WebSocket (GUI ↔ Facade) + TCP (Facade ↔ coldstorageservice)
+ * - Comunicazione: WebSocket (GUI <--> Facade) + TCP (Facade <--> coldstorageservice)
  * ---------------------------------------------------------------------------------
  */
+ 
 /* 
 Facade coldstorageservicefacade port 8091 
        usingactor coldstorageservice inctx ctxcoldstorageservice

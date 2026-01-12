@@ -125,6 +125,14 @@ header h1 {
 }
 
 /* buttons per i pulsanti */
+.auto-update-indicator {
+    color: var(--text-color);
+    font-size: 0.875rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
 .btn {
     padding: 0.75rem 1.5rem;                /* spazio interno */
     border: none;                           /* nessun bordo */
@@ -308,3 +316,43 @@ footer {
         grid-template-columns: 1fr;         /* una colonna */
     }
 }
+
+
+/* Animazione per update peso */
+#currentWeight.updating {
+    animation: weightUpdate 0.5s ease;
+    transform: scale(1.1);
+    font-weight: bold;
+}
+
+@keyframes weightUpdate {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1.1);
+    }
+}
+
+/* colori in base al riempimento */
+#currentWeight.weight-low {
+    color: #10b981;  /* verde (< 50%) */
+}
+
+#currentWeight.weight-medium {
+    color: #f59e0b;  /* arancione (50%-80%) */
+}
+
+#currentWeight.weight-high {
+    color: #ef4444;  /* rosso (> 80%) */
+    font-weight: bold;
+}
+
+/* transizione per cambio colore */
+#currentWeight {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+

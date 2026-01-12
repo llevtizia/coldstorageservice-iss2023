@@ -25,6 +25,7 @@ dispatch( tryagain, tryagain(X) ).
 dispatch( giveup, giveup(X) ).
 dispatch( restart, restart(X) ).
 dispatch( reset, reset(X) ).
+dispatch( currentlystored, currentlystored(KG) ).
 %====================================================================================
 context(ctxcoldstorageservice, "localhost",  "TCP", "8015").
 context(ctxbasicrobot, "127.0.0.1",  "TCP", "8020").

@@ -54,7 +54,7 @@ QActor alarmdevice context  ctxalarms { //manager sonar
     	forward sonar -m sonarstart : sonarstart(start)
     
 	}
-	Goto work
+	Goto work 
 	
 	State work { 
 		//println("$name - waiting...") color cyan

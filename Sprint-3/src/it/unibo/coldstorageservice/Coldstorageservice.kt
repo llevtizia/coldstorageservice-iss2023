@@ -40,6 +40,8 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
 						 	   
 						CommUtils.outgreen("$name START ")
+						updateResourceRep( "currentlystored($CurrentLoad)"  
+						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -84,6 +86,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								CommUtils.outblack("Current load in the cold room: $CurrentLoad ")
 								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)"   )  
 								 TicketNumber = TicketNumber + 1  
+								updateResourceRep( "currentlystored($CurrentLoad)"  
+								)
+								CommUtils.outcyan("$name | Updated current weight: $CurrentLoad kg")
 								}
 								else
 								 {CommUtils.outgreen("$name refusing load of $LoadToStore kg")
@@ -126,6 +131,9 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								 					CurrentLoad = CurrentLoad - Load
 								 					list.remove(request)
 								         			println(list) 
+								 updateResourceRep( "currentlystored($CurrentLoad)"  
+								 )
+								 CommUtils.outcyan("$name | Updated current weight: $CurrentLoad kg")
 								 }
 						}
 						//genTimer( actor, state )

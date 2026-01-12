@@ -1,0 +1,1 @@
+{"actor":"warningdevice", "msgType":"dispatch", "curstate":"waitforchange", "nextstate":"updateled", "msgId":"statustrolley"}

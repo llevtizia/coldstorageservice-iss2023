@@ -21,15 +21,61 @@ class Warningdevice ( name: String, scope: CoroutineScope, isconfined: Boolean=f
 	}
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		//val interruptedStateTransitions = mutableListOf<Transition>()
+		 
+		        var currentTrolleyState = "unknown"
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						CommUtils.outgreen("$name - START")
+						CommUtils.outyellow("$name - START")
+						observeResource("127.0.0.1","8015","ctxcoldstorageservice","trolley","statustrolley")
+						CommUtils.outyellow("$name | OBSERVING trolley status...")
+						forward("ledoff", "ledoff(init)" ,"led" ) 
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
+					 transition( edgeName="goto",targetState="waitforchange", cond=doswitch() )
+				}	 
+				state("waitforchange") { //this:State
+					action { //it:State
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition(edgeName="t03",targetState="updateled",cond=whenDispatch("statustrolley"))
+				}	 
+				state("updateled") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("statustrolley(X,Y)"), Term.createTerm("statustrolley(TICKET,STATE)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								 currentTrolleyState = payloadArg(1)  
+								CommUtils.outyellow("$name | Trolley state: $currentTrolleyState")
+								if(  currentTrolleyState.contains("waitrequest") || currentTrolleyState.contains("trolleyathome") || 
+								            	currentTrolleyState.contains("resetdone")  
+								 ){CommUtils.outred("$name | LED OFF")
+								forward("ledoff", "ledoff(home)" ,"led" ) 
+								}
+								else
+								 {if(  currentTrolleyState.contains("stopped")  
+								  ){CommUtils.outgreen("$name | LED ON")
+								 forward("ledon", "ledon(stopped)" ,"led" ) 
+								 }
+								 else
+								  {CommUtils.outyellow("$name | LED BLINKS")
+								  forward("ledblink", "ledblink(moving)" ,"led" ) 
+								  }
+								 }
+						}
+						updateResourceRep( "warningdevice($currentTrolleyState)"  
+						)
+						//genTimer( actor, state )
+					}
+					//After Lenzi Aug2002
+					sysaction { //it:State
+					}	 	 
+					 transition( edgeName="goto",targetState="waitforchange", cond=doswitch() )
 				}	 
 			}
 		}
