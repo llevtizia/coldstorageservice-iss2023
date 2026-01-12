@@ -318,3 +318,25 @@ img {
     font-style: italic;
 }
 
+/* per cit. requisiti */
+div.remark blockquote {
+    background-color: #F0FFFF;  
+    border: 1.5px solid #d5f2ed;
+    border-left: 4px solid #4FC3F7;  
+    border-radius: 20px;  
+    padding: 12px 18px;
+    margin: 12px 0;
+    font-family: "Arial", sans-serif;
+    font-size: 95%;
+    color: #1e293b;  
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+}
+
+
+div.remark blockquote code {
+    background-color: rgba(255,255,255,0.7);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "Consolas", monospace;
+    font-size: 85%;
+}

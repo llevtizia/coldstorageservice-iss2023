@@ -760,7 +760,7 @@ QActor trolley context ctxcoldstorageservice {
 		println("$name  disengaged") color magenta
 		delay 1000 //avoid to premature abort of connection
 		[# System.exit(0) #] 
-	}
+	} 
 } 
 	
 	  

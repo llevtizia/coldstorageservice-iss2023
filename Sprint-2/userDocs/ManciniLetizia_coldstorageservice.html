@@ -333,62 +333,99 @@
 
                 <h4>Trolley</h4>
                 <p>
-                    <ul>
-                        <li>
-                            aggiunte variabili di stato <code>OldStatus</code>, <code>CurrentStatus</code>
-                        </li>
-                        <li>
-                            aggiunta gestione della ripresa dopo uno stop: <code>if [# stopped #]</code> e messaggio <code>resumetrolley</code>
-                        </li>
-                        <li>
-                            aggiunte transizioni di stato per <code>stoptrolley</code> e <code>reset</code>
-                        </li>
-                        <li>
-                            nuovi stati:
+                    <p>
+                        <ul>
+                            <li>
+                                aggiunte variabili di stato <code>OldStatus</code>, <code>CurrentStatus</code>
+                            </li>
+                            <li>
+                                aggiunta gestione della ripresa dopo uno stop: <code>if [# stopped #]</code> e messaggio <code>resumetrolley</code>
+                            </li>
+                            <li>
+                                aggiunte transizioni di stato per <code>stoptrolley</code> e <code>reset</code>
+                            </li>
+                            <li>
+                                nuovi stati:
+                                <ul>
+                                    <li>
+                                        <code><highlight>stoptrolley</highlight></code> per la gestione dello stop: ferma il trolley alla ricezione del messaggio <code>stoptrolley</code> inoltrato dal coldstorageservice, salva lo stato precedente del trolley, emette l'evento <code>alarm</code> per fermare fisicamente il basicrobot, ignora stop multipli se il trolley è già fermo
+                                    </li>
+                                    <li>
+                                        <code><highlight>forcehome</highlight></code> nel caso in cui <code>gohome</code> non riceva una risposta dal basicrobot (timeout 20 secondi): corregge l'orientamento del robot e riprova a tornare in HOME, dopo un timeout senza risposta va in <code>waitrequest</code>
+                                    </li>
+                                    <li>
+                                        <code><highlight>verifyfailed </highlight></code> gestisce i fallimenti di <code>gohome</code>: dopo <b>MAX_RETRY</b> tentativi accetta la posizione corrente
+                                    </li>
+                                    <li>
+                                        <code><highlight>checkretry</highlight></code>: separa la logica di retry dalla logica di fallback (in base a quanti tentativi sono già stati fatti)
+                                    </li>
+                                    <li>
+                                        <code><highlight>handlereset</highlight></code>: per resettare il sistema durante i test senza dover riavviare tutto, riporta il trolley in <code>HOME</code> da qualsiasi stato
+                                    </li>
+                                    <li>
+                                        <code><highlight>resetdone</highlight></code>: stato finale del reset, azzera le variabili e torna in <code>waitrequest</code> per accettare nuove richieste
+                                    </li>
+                                    <li>
+                                        <code><highlight>resetretry</highlight></code>: gestisce i fallimenti del reset, dopo tre tentativi forza il robot in HOME
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                stati modificati:
+                                <ul>
+                                    <li>
+                                        <code><highlight>failed</highlight></code>: gestisce i retry, dopo <b>MAX_RETRY</b> forza il robot in <code>gohome</code>, usa il messaggio <code>tryagain</code> per tornare allo stato corretto
+                                    </li>
+                                    <li>
+                                        <code><highlight>trolleyathome</highlight></code>: il sistema rimane attivo per accettare nuove richieste e torna in <code>waitrequest</code>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                nuovo stato:
+                                <ul>
+                                    <li>
+                                        <code><highlight>exitsystem</highlight></code>: per terminare effettivamente il sistema
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </p>
+                    <p>
+                        <h5>Problema riscontrato</h5>
+                        <p>
+                            Durante i test si è osservato che il <ks>trolley</ks> occasionalmente fallisce nel 
+                            ritorno alla posizione <b>HOME (0,0)</b> dopo aver completato il deposito del carico. 
+                            Questo comportamento si manifesta con il messaggio:
+                        </p>
+                        <pre>
+                            trolley | gohome fallito (tentativo 1/3)
+                            trolley | Riprovo gohome...
+                        </pre>
+                        <p>
+                            Il fallimento è dovuto a problemi di <b>pianificazione</b> del path da parte del 
+                            <ks>basicrobot</ks>, che può verificarsi quando:
+                            <ul>
+                                <li>il robot si trova in una posizione con <b>orientamento non ottimale</b></li>
+                                <li>esistono <b>ostacoli temporanei</b> nel percorso pianificato</li>
+                                <li>il planner non riesce a trovare un <b>path valido</b> verso HOME</li>
+                            </ul>
+                        </p>
+
+                        <h5>Soluzione</h5>
+                        <p>
                             <ul>
                                 <li>
-                                    <code><highlight>stoptrolley</highlight></code> per la gestione dello stop: ferma il trolley alla ricezione del messaggio <code>stoptrolley</code> inoltrato dal coldstorageservice, salva lo stato precedente del trolley, emette l'evento <code>alarm</code> per fermare fisicamente il basicrobot, ignora stop multipli se il trolley è già fermo
+                                    è stato introdotto un <b>meccanismo di retry</b> con correzione dell'orientamento basato su <code>forcehome</code>, <code>verifyfailed</code>, <code>checkretry</code>
                                 </li>
                                 <li>
-                                    <code><highlight>forcehome</highlight></code> nel caso in cui <code>gohome</code> non riceva una risposta dal basicrobot (timeout 20 secondi): corregge l'orientamento del robot e riprova a tornare in HOME, dopo un timeout senza risposta va in <code>waitrequest</code>
-                                </li>
-                                <li>
-                                    <code><highlight>verifyfailed </highlight></code> gestisce i fallimenti di <code>gohome</code>: dopo <b>MAX_RETRY</b> tentativi accetta la posizione corrente
-                                </li>
-                                <li>
-                                    <code><highlight>checkretry</highlight></code>: separa la logica di retry dalla logica di fallback (in base a quanti tentativi sono già stati fatti)
-                                </li>
-                                <li>
-                                    <code><highlight>handlereset</highlight></code>: per resettare il sistema durante i test senza dover riavviare tutto, riporta il trolley in <code>HOME</code> da qualsiasi stato
-                                </li>
-                                <li>
-                                    <code><highlight>resetdone</highlight></code>: stato finale del reset, azzera le variabili e torna in <code>waitrequest</code> per accettare nuove richieste
-                                </li>
-                                <li>
-                                    <code><highlight>resetretry</highlight></code>: gestisce i fallimenti del reset, dopo tre tentativi forza il robot in HOME
+                                    <ks>strategia di recupero:</ks> correzione orientamento, timeout con retry, graceful degradation
                                 </li>
                             </ul>
-                        </li>
-                        <li>
-                            stati modificati:
-                            <ul>
-                                <li>
-                                    <code><highlight>failed</highlight></code>: gestisce i retry, dopo <b>MAX_RETRY</b> forza il robot in <code>gohome</code>, usa il messaggio <code>tryagain</code> per tornare allo stato corretto
-                                </li>
-                                <li>
-                                    <code><highlight>trolleyathome</highlight></code>: il sistema rimane attivo per accettare nuove richieste e torna in <code>waitrequest</code>
-                                </li>
-                            </ul>
-                        </li>
-                        <li>
-                            nuovo stato:
-                            <ul>
-                                <li>
-                                    <code><highlight>exitsystem</highlight></code>: per terminare effettivamente il sistema
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
+                            
+                        </p>
+                    </p>
+                    
                 </p>
 
                 <h4>Alarm Device (gestore sonar)</h4>

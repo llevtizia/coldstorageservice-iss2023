@@ -17,9 +17,21 @@
         <div class="body"> 
         <h2>Introduction</h2>
         <div class="slide1">
-            <b>Goal Sprint 3</b>:  
+            <b>Goal Sprint 3</b>: realizzazione <i>ServiceAccessGUI</i>
         </div>
         <div class="remark">
+          <a href="../../Sprint-2/userDocs/ManciniLetizia_coldstorageservice.html">Sprint 2</a>: lo Sprint 2 si è occupato della realizzazione dei dispositivi di allarme del sistema (<i>alarmdevice</i> e <i>warningdevice</i>), realizzando un prototipo eseguibile con la seguente <b>architettura logica</b>:
+          <div class="image-container-sameline">
+                <div class="image-item-sameline">
+                    <img src="../../Sprint-2/coldstorageservicearch.png" alt="Architettura coldstorageservice">
+                    <div class="caption">Architettura <b>sprint-2.qak</b></div>
+                </div>
+                
+                <div class="image-item-sameline">
+                    <img src="../../alarms/alarmsarch.png" alt="Architettura alarms">
+                    <div class="caption">Architettura <b>alarms.qak</b></div>
+                </div>
+            </div>
           
         </div>
        
@@ -27,43 +39,372 @@
         <!-- REQUIREMENTS -->
         <h2>Requirements</h2>
         <div class="remark">
-            
+            <p>
+                <p>
+                    <a href="./../../Sprint-0/userDocs/ManciniLetizia_coldstorageservice.html#userstories">User stories</a>: in questo <i>Sprint</i> sarà analizzato il keypoint <em>1</em>, in relazione all'uso della <ks>ServiceAccessGUI</ks> da parte dell'utente. Dal testo del <a href="html/TemaFinale23.html">tema finale</a>, possiamo dire che:
+                    <blockquote>
+                        The ServiceAccessGUI allows a human being to see the current current weigth of the material stored in the ColdRoom and to send to the ColdStorageService a request to store new <b>FW</b> kg of food. If the request is accepted, the services return a ticket that expires after a prefixed amount of time (<b>TICKETTIME</b> secs) and provides a field to enter the ticket number when a Fridge truck is at the INDOOR of the service.
+                    </blockquote>
+                </p>
+                <p>
+                    L'interfaccia deve consentire all'utente di:
+                    <ul>
+                        <li>
+                            visualizzare il <b>peso corrente</b> depositato nella ColdRoom
+                        </li>
+                        <li>
+                            mandare al <ks>coldstorageservice</ks> la richiesta di depositare <b>FW</b> kg
+                        </li>
+                        <li>
+                            ottenere un numero di <b>ticket</b> che può essere inviato al servizio una volta che il truck raggiunge la porta INDOOR 
+                        </li>
+                    </ul>              
+                </p>
+            </p>
         </div>
 
 
         <!-- REQUIREMENTS ANALYSIS -->
         <h2>Requirement analysis</h2>
-        <div class="remark">  
-           
-            
+        <div class="remark">
+            <p>
+                <h3>KEYPOINTS</h3>
+                <p>
+                    <ol>
+                        <li>sostituzione della <em>GUI</em> simulata</li>
+                        <li><em>comunicazione</em> con il sistema</li>
+                        <li>gestione <em>errori</em></li>
+                    </ol>
+                </p>
+
+                <h4>1 - Requisiti GUI</h4>
+                <p>
+                    L'interfaccia deve sostituire il precedente QActor <ks>serviceaccessgui</ks> mantenendo le stesse funzionalità
+                    <ul>
+                        <li>
+                            <b><highlight>form di richiesta</highlight></b> per inserire il peso da inviare (deve essere compreso tra 0 e <b>MAXW</b>)
+                        </li>
+                        <li>
+                            se la prima richiesta va a buon fine, visualizzazione delle <b><highlight>informazioni del ticket</highlight></b> ottenuto in risposta (numero del ticket, peso del carico, countdown validità ticket) 
+                        </li>
+                        <li>
+                            <b><highlight>form</highlight></b> per inviare il <b><highlight>ticket</highlight></b> entro l'intervallo di tempo
+                        </li>
+                        <li>
+                            campo per vedere il <b><highlight>carico corrente</highlight></b> che occupa la ColdRoom
+                        </li>
+                    </ul>
+                </p>
+                <p>
+                    Il committente mette a disposizione una serie di progetti:
+                    <ul>
+                        <li>
+                            <ks><a href="html/Facade24Start.html">Facade24Start</a></ks>: usa SpringBoot per costruire lo schema di una <highlight>applicazione Web</highlight> che fornisce una Web-GUI per l'interfacciamento con applicazioni qak
+                        </li>
+                        <li>
+                            <ks><a href="html/RobotFacade24.html">RobotFacade24</a></ks>: usa SpringBoot per costruire una <highlight>applicazione web</highlight> che fornisce una console di comando per il <i>basicrobot</i>
+                        </li>
+                    </ul>
+                    
+                </p>
+
+                <h4>3 - Gestione Errori</h4>
+                <p>
+                    L'interfaccia deve gestire e visualizzare chiaramente:
+                    <ul>
+                        <li>richieste rifiutate (peso eccede spazio disponibile o valore inserito non valido)</li>
+                        <li>ticket scaduti</li>
+                        <li>ticket non validi</li>
+                        <li>errori di connessione</li>
+                    </ul>
+                </p>
+
+                <h3>Estensioni future</h3>
+                <p>
+                    <p>
+                        Nonostante non sia esplicitamente richiesto nei requisiti del testo, è ragionevole anticipare la necessità futura di un metodo per lo <ks>svuotamento</ks> della ColdRoom.
+                    </p>
+                    <p>
+                        Tale funzionalità comporterebbe:
+                        <ul>
+                            <li>un nuovo <ks>QActor</ks> che coordini lo svuotamento</li>
+                            <li>comunicazione con il <ks>trolley</ks> per il trasporto dei carichi verso l'esterno</li>
+                            <li>aggiornamento del peso corrente (<ks>CurrentLoad</ks>) durante lo svuotamento</li>
+                            <li>possibile estensione dell'interfaccia con una sezione dedicata</li>
+                        </ul>
+                    </p>
+                    <p>
+                        L'architettura del sistema è progettata in modo modulare ed estensibile ma, dato che la funzionalità non è esplicitamente richiesta dai requisiti, si è scelto di <b>non implementare</b> nulla a riguardo in questa fase.
+                    </p>
+                </p>
+            </p>           
         </div>
 
 
         <!-- PROBLEM ANALYSIS -->  
         <h2>Problem analysis</h2>
         <div class="remark">
+            <p>
+                <h3>Architettura</h3>
+                <h4>Patter Facade e SpringBoot</h4>
+                <p>
+                    <p>
+                        Per lo sviluppo dell'<b>interfaccia web</b> si è scelto di utilizzare <a href="html/SpringBootIntro.html">SpringBoot</a>, seguendo l'approccio dei progetti di riferimento forniti dal committente. La scelta presenta una serie di vantaggi:
+                        <ul>
+                            <li><i>riutilizzo</i> di componenti già testati e validati <highlight>(SpringBoot + WebSocket + CoAP)</highlight></li>
+                            <li><i>consistenza</i> con gli esempi forniti</li>
+                            <li><i>riduzione dei rischi</i> implementativi grazie alla presenza di esempi funzionanti</li>
+                        </ul> 
+                    </p>
+                    <p>
+                        <img src="html/_images/Facade24StartCreation.PNG" alt="architettura facade" class="medium_image">
+                        <div class="caption">L’organizzazione interna della Facade si compone di oggetti Java, che vengono creati a partire dal componente <b>FacadeController</b>, che demanda a <b>FacadeBuilder</b> la creazione dei componenti del sistema</div>
+                    </p>
+                    <p>
+                        La <em><highlight>Facade</highlight></em> consente di:
+                        <ul>
+                            <li>
+                                definire un <b>sistema autonomo</b> che si relaziona con il sistema QAK sottostante
+                            </li>
+                            <li>
+                                fornire un'interfaccia per la comunicazione client/server tramite <i>WebSocket</i>
+                            </li>
+                            <li>
+                                semplificare la gestione dell'output, modificando solamente la logica applicativa di gestione dell'input
+                            </li>
+                            <li>
+                                inviare all'attore le richieste di input via <b>TCP</b> e ricevere informazioni dall'attore via <b>CoAP</b>
+                            </li>
+                        </ul>
+                    </p>
+                    
+                </p> 
+
+                <h4>Componenti facade</h4>
+                <p>
+                    <p>
+                        <ul>
+                            <li>
+                                Molti componenti nascono perchè voluti dal framework <i>SpringBoot</i>
+                            </li>
+                            <li>
+                                <code>ApplguiCore</code> e <code>ActorOutIn</code> sono legati invece ai <a href="html/Principi.html#id1"><highlight>principi <ks>SOLID</ks> di <ks>Clean Architecture</ks></highlight></a>
+                            </li>
+                        </ul>
+                    </p>
+                    <p>
+                        <table>
+                            <tr>
+                                <td><ks>CustomContainer</ks></td>
+                                <td>crea <i>ApplSystemInfo</i> e fissa il nome della applicazione al valore ApplSystemInfo.appName</td>
+                            </tr>
+                            <tr>
+                                <td><ks>ApplSystemInfo</ks></td>
+                                <td>legge il file <em>facadeConfig.json</em> (usando <i>QaksysConfigSupport</i>) e fissa i valori di variabili che danno informazioni sul sistema</td>
+                            </tr>
+                            <tr>
+                                <td><ks>QaksysConfigSupport</ks></td>
+                                <td>utility per leggere i valori del file <em>facadeConfig.json</em></td>
+                            </tr>
+                            <tr>
+                                <td><ks>ServiceFacadeController</ks></td>
+                                <td>restituisce la pagina <i>qakFacadeGui.html</i></td>
+                            </tr>
+                            <tr>
+                                <td><ks>FacadeBuilder</ks></td>
+                                <td>crea e configura gli oggetti che compongono la Facade: 
+                                    <highlight>WSHandler</highlight>, <highlight>ApplguiCore</highlight>, 
+                                    <highlight>ActorOutIn</highlight>, <highlight>CoapObserver</highlight>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><ks>WebSocketConfiguration</ks></td>
+                                <td> componente richiesto da SpringBoot per la gestione delle ws (tramite <i>WSHandler</i>)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><ks>WSHandler</ks></td>
+                                <td>Gestore delle interazioni via WebSocket</td>
+                            </tr>
+                            <tr>
+                                <td><ks>ApplguiCore</ks></td>
+                                <td> rappresenta la logica applicativa, gestisce i messaggi di input e output tramite <i>ActorOutIn</i></td>
+                            </tr>
+                            <tr>
+                                <td><ks>ActorOutIn</ks></td>
+                                <td>adapter TCP per comunicazione con QAK</td>
+                            </tr>
+                            <tr>
+                                <td><ks>CoapObserver</ks></td>
+                                <td>observer CoAP per aggiornamenti automatici</td>
+                            </tr>                
+                        </table>
+                    </p>              
+                </p> 
+            </p>
+             
+            <p>
+                <h3>Protocolli di comunicazione</h3>
+                <p>
+                    <table border="1">
+                        <tr>
+                            <th>Comunicazione</th>
+                            <th>Protocollo</th>
+                            <th>Direzione</th>
+                            <th>Scopo</th>
+                        </tr>
+                        <tr>
+                            <td>GUI ↔ Facade</td>
+                            <td>WebSocket</td>
+                            <td>Bidirezionale</td>
+                            <td>Richieste utente + aggiornamenti real-time</td>
+                        </tr>
+                        <tr>
+                            <td>Facade → QAK</td>
+                            <td>TCP</td>
+                            <td>Request/Reply</td>
+                            <td>Inoltro richieste utente</td>
+                        </tr>
+                        <tr>
+                            <td>QAK → Facade</td>
+                            <td>CoAP (Observer)</td>
+                            <td>Push (via observe)</td>
+                            <td>Notifiche automatiche di cambio stato</td>
+                        </tr>
+                    </table>
+
+                    <p>
+                        <h4>Pattern CoAP Observer</h4></b>
+                        <p>
+                            La Facade si registra come observer delle risorse QAK. Quando una risorsa viene aggiornata (es. <code>updateResource("currentlyStored(50.0)")</code>), il QAK notifica automaticamente la Facade, che inoltra l'aggiornamento alla GUI via WebSocket.
+                        </p>
+                    </p>
+                    
+                </p>
+            </p>
             
-            
+            <h3>Architettura coldstorageservice</h3>
+            <p>
+                <img src="../coldstorageservicearch.png" alt="architettura coldstorageservice" class="medium_image">
+            </p>
         </div>
 
 
         <h2>Project</h2>
         <div class="remark">
-            
-    
+            <p>
+                <p>
+                    <h3>Facade</h3>
+                    <p>
+                        <h4>Implementazione frontend</h4>
+                        <p>
+                            <ul>
+                                <li>
+                                    <a href="../../serviceaccessgui/src/main/resources/templates/qakFacadeGUI.html">qakFacadeGUI.html (link)</a>: struttura interfaccia
+                                </li>
+                                <li>
+                                    <a href="../../serviceaccessgui/src/main/resources/static/app.js">app.js (link)</a>: logica principale
+                                </li>
+                                <li>
+                                    <a href="../../serviceaccessgui/src/main/resources/static/styles.css">styles.css (link)</a>: styling GUI
+                                </li>
+                            </ul>
+                        </p>
+                        <h4>Configurazione</h4>
+                        <p>
+                            <ul>
+                                <li>
+                                    <a href="../../serviceaccessgui/facadeConfig.json">facadeConfig.json</a>
+                                </li>
+                                <li>
+                                    <a href="../../serviceaccessgui/src/main/resources/application.properties">application.properties</a>
+                                </li>
+                            </ul>
+                        </p>
+                    </p>
+                </p>
+                <p>
+                    <h3>Modifiche al sistema <ks>coldstorageservice</ks></h3>
+                    <p>
+                        <a href="../src/sprint-3.qak">Nuovo modello <ks>sprint-3.qak</ks> (link)</a>
+                    </p>
+                    <p>
+                        <ul>
+                            <li>
+                                rimossa <ks>serviceaccessgui</ks> simulata
+                            </li>
+                            <li>
+                                aggiunto messaggio <code>currentlystored</code> per aggiornare il peso nella ColdRoom
+                            </li>
+                        </ul>
+                    </p>                    
+                </p>                
+            </p>            
         </div>
        
 
         <h2>Test plans</h2>
         <div class="remark">
+            <p>
+                <h3>Test funzionali</h3>
+                <p>
+                    <h4>Test 1: Richiesta deposito accettata</h4>
+    
+                    <p>
+                        <highlight><ks>Scenario</ks></highlight>: deposito 50 kg con spazio disponibile
+
+                        <ol>
+                            <li>apro il browser su <code>http://localhost:8091</code></li>
+                            <li>nel campo "Peso da depositare": inserisco <code>50</code></li>
+                            <li>clicco su "Invia Richiesta"</li>
+                        </ol>
+                    </p>   
+                    <p>
+                        <highlight><ks>Risultato atteso</ks></highlight>:
+                        <ul>
+                            <li>messaggio: <i>"Richiesta accettata! Ticket: 1 per 50 kg"</i></li>
+                            <li>toast notification verde: <i>"OK! Ticket 1 generato!"</i></li>
+                            <li>card ticket appare con:
+                                <ul>
+                                    <li>numero ticket: 1</li>
+                                    <li>peso: 50 kg</li>
+                                    <li>tempo rimasto: 30:00 (inizia il countdown)</li>
+                                </ul>
+                            </li>
+                            <li>campo <b>"Numero Ticket"</b> auto-compilato con valore <code>1</code></li>
+                            <li>peso corrente aggiornato a <b>50 kg</b> (visualizzato in verde)</li>
+                        </ul>                    
+                    </p>
+
+                    <h4>Test 2: Richiesta deposito rifiutata</h4>
+                    <p>
+                        <highlight><ks>Scenario</ks></highlight>: tentativo di deposito 150 kg quando lo spazio disponibile è solo 100 kg
+
+                        <ol>
+                            <li>
+                                <ks>prima richiesta</ks>: <b>100 kg</b> (accettata, il peso corrente diventa 100 kg)</code>
+                            </li>
+                            <li>
+                                <ks>seconda richiesta</ks>: nel campo "Peso da depositare" inserisco <code>150</code>
+                            </li>
+                            <li>clicco su "Invia Richiesta"</li>
+                        </ol>
+                    </p>
+                    <p>
+                        <highlight><ks>Risultato atteso</ks></highlight>:
+                        <ul>
+                            <li>
+                                messaggio di errore: <i>"Richiesta rifiutata! 150 kg supera lo spazio disponibile (100 kg)"</i>
+                            </li>
+                            <li>toast notification rossa: <i>"ERROR Richiesta rifiutata"</i></li>
+                            <li>nessun ticket viene generato</li>
+                            <li>il peso corrente rimane invariato: <b>100 kg</b></li>
+                        </ul>                    
+                    </p>
+                </p>
+            </p>
     
         </div>
-        
-
-        <h2>Piano di lavoro</h2> 
-        <div class="remark">
-            
-        </div> 
 
         
        
