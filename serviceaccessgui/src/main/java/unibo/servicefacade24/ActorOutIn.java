@@ -9,8 +9,8 @@ import unibo.basicomm23.tcp.TcpClientSupport;
 import unibo.basicomm23.utils.CommUtils;
 
 /*
-Adapter verso il QActor che fa da facade
-Usa il file facadeConfig.json
+* adapter verso il QActor che fa da facade
+* usa il file facadeConfig.json
  */
 public class ActorOutIn {
     private ApplguiCore guiCore;
@@ -33,7 +33,7 @@ public class ActorOutIn {
         }
      }
 
-     //Injection
+     //injection
      public void setGuiCore(ApplguiCore guiCore){
          this.guiCore = guiCore;
      }

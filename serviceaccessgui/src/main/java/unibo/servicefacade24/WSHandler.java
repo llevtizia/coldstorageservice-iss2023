@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 /*
-Gestisce la websocket avendo come riferimento applicativo ApplguiCore
- */
+* gestisce la websocket avendo come riferimento applicativo ApplguiCore
+*/
 
 
 public class WSHandler extends AbstractWebSocketHandler {
@@ -21,7 +21,7 @@ public class WSHandler extends AbstractWebSocketHandler {
 
     private ApplguiCore guiCore;
 
-    //Injiection
+    //Injection
     public void setGuiCore(ApplguiCore gui) {
         guiCore = gui;
     }
@@ -52,9 +52,9 @@ public class WSHandler extends AbstractWebSocketHandler {
     }
 
     protected synchronized  void sendToAll(String message) { //synchronized JAN24
-        //Appena si collega alla appl remota, il CoAP observer riceve dati vecchi
-        //e chiama  sendToAll prima amcora che un utente
-        //abbia aperto la pagina con il browser e che quindi ci sia una WS
+        // appena si collega alla appl remota, il CoAP observer riceve dati vecchi
+        // e chiama  sendToAll prima amcora che un utente
+        // abbia aperto la pagina con il browser e che quindi ci sia una WS
         CommUtils.outcyan("WSH | Sending to all " + message);
         try {
             if( sessions.size() > 0 ){
