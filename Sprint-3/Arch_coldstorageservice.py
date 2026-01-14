@@ -26,12 +26,14 @@ with Diagram('coldstorageserviceArch', show=False, outformat='png', graph_attr=g
      sys = Custom('','./qakicons/system.png')
 ### see https://renenyffenegger.ch/notes/tools/Graphviz/attributes/label/HTML-like/index
      with Cluster('ctxcoldstorageservice', graph_attr=nodeattr):
+          serviceaccessgui=Custom('serviceaccessgui','./qakicons/symActorSmall.png')
           coldstorageservice=Custom('coldstorageservice','./qakicons/symActorSmall.png')
           trolley=Custom('trolley','./qakicons/symActorSmall.png')
      with Cluster('ctxbasicrobot', graph_attr=nodeattr):
           basicrobot=Custom('basicrobot(ext)','./qakicons/externalQActor.png')
      trolley >> Edge( label='alarm', **eventedgeattr, decorate='true', fontcolor='red') >> sys
      trolley >> Edge(color='magenta', style='solid', decorate='true', label='<engage<font color="darkgreen"> engagedone engagerefused</font> &nbsp; moverobot<font color="darkgreen"> moverobotdone moverobotfailed</font> &nbsp; >',  fontcolor='magenta') >> basicrobot
+     serviceaccessgui >> Edge(color='magenta', style='solid', decorate='true', label='<storerequest<font color="darkgreen"> storeaccepted storerefused</font> &nbsp; ticketrequest<font color="darkgreen"> chargetaken ticketrefused</font> &nbsp; >',  fontcolor='magenta') >> coldstorageservice
      trolley >> Edge(color='blue', style='solid',  decorate='true', label='<setrobotstate &nbsp; setdirection &nbsp; disengage &nbsp; >',  fontcolor='blue') >> basicrobot
      coldstorageservice >> Edge(color='blue', style='solid',  decorate='true', label='<gotakecharge &nbsp; stoptrolley &nbsp; resumetrolley &nbsp; >',  fontcolor='blue') >> trolley
      trolley >> Edge(color='blue', style='solid',  decorate='true', label='<giveup &nbsp; tryagain &nbsp; reset &nbsp; >',  fontcolor='blue') >> trolley

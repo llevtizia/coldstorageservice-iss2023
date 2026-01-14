@@ -47,7 +47,7 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t05",targetState="waitrequest",cond=whenReply("engagedone"))
+					 transition(edgeName="t09",targetState="waitrequest",cond=whenReply("engagedone"))
 				}	 
 				state("waitrequest") { //this:State
 					action { //it:State
@@ -73,10 +73,10 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_waitrequest", 
 				 	 					  scope, context!!, "local_tout_"+name+"_waitrequest", 600000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t06",targetState="exitsystem",cond=whenTimeout("local_tout_"+name+"_waitrequest"))   
-					transition(edgeName="t07",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
-					transition(edgeName="t08",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t09",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t010",targetState="exitsystem",cond=whenTimeout("local_tout_"+name+"_waitrequest"))   
+					transition(edgeName="t011",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					transition(edgeName="t012",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t013",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("gotoindoor") { //this:State
 					action { //it:State
@@ -107,10 +107,10 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t010",targetState="takeload",cond=whenReply("moverobotdone"))
-					transition(edgeName="t011",targetState="failed",cond=whenReply("moverobotfailed"))
-					transition(edgeName="t012",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t013",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t014",targetState="takeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t015",targetState="failed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t016",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t017",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("takeload") { //this:State
 					action { //it:State
@@ -135,9 +135,9 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_takeload", 
 				 	 					  scope, context!!, "local_tout_"+name+"_takeload", 50.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t014",targetState="gotocoldroom",cond=whenTimeout("local_tout_"+name+"_takeload"))   
-					transition(edgeName="t015",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t016",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t018",targetState="gotocoldroom",cond=whenTimeout("local_tout_"+name+"_takeload"))   
+					transition(edgeName="t019",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t020",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("gotocoldroom") { //this:State
 					action { //it:State
@@ -162,10 +162,10 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t017",targetState="storeload",cond=whenReply("moverobotdone"))
-					transition(edgeName="t018",targetState="failed",cond=whenReply("moverobotfailed"))
-					transition(edgeName="t019",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t020",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t021",targetState="storeload",cond=whenReply("moverobotdone"))
+					transition(edgeName="t022",targetState="failed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t023",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t024",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("storeload") { //this:State
 					action { //it:State
@@ -190,10 +190,10 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_storeload", 
 				 	 					  scope, context!!, "local_tout_"+name+"_storeload", 2000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t021",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
-					transition(edgeName="t022",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
-					transition(edgeName="t023",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t024",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t025",targetState="gohome",cond=whenTimeout("local_tout_"+name+"_storeload"))   
+					transition(edgeName="t026",targetState="gotoindoor",cond=whenDispatch("gotakecharge"))
+					transition(edgeName="t027",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t028",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("gohome") { //this:State
 					action { //it:State
@@ -219,11 +219,11 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_gohome", 
 				 	 					  scope, context!!, "local_tout_"+name+"_gohome", 20000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t025",targetState="forcehome",cond=whenTimeout("local_tout_"+name+"_gohome"))   
-					transition(edgeName="t026",targetState="trolleyathome",cond=whenReply("moverobotdone"))
-					transition(edgeName="t027",targetState="verifyfailed",cond=whenReply("moverobotfailed"))
-					transition(edgeName="t028",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t029",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t029",targetState="forcehome",cond=whenTimeout("local_tout_"+name+"_gohome"))   
+					transition(edgeName="t030",targetState="trolleyathome",cond=whenReply("moverobotdone"))
+					transition(edgeName="t031",targetState="verifyfailed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t032",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t033",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("trolleyathome") { //this:State
 					action { //it:State
@@ -263,11 +263,11 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_forcehome", 
 				 	 					  scope, context!!, "local_tout_"+name+"_forcehome", 20000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t030",targetState="waitrequest",cond=whenTimeout("local_tout_"+name+"_forcehome"))   
-					transition(edgeName="t031",targetState="trolleyathome",cond=whenReply("moverobotdone"))
-					transition(edgeName="t032",targetState="verifyfailed",cond=whenReply("moverobotfailed"))
-					transition(edgeName="t033",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t034",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t034",targetState="waitrequest",cond=whenTimeout("local_tout_"+name+"_forcehome"))   
+					transition(edgeName="t035",targetState="trolleyathome",cond=whenReply("moverobotdone"))
+					transition(edgeName="t036",targetState="verifyfailed",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t037",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t038",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("verifyfailed") { //this:State
 					action { //it:State
@@ -289,9 +289,9 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_verifyfailed", 
 				 	 					  scope, context!!, "local_tout_"+name+"_verifyfailed", 500.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t035",targetState="checkretry",cond=whenTimeout("local_tout_"+name+"_verifyfailed"))   
-					transition(edgeName="t036",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t037",targetState="handlereset",cond=whenDispatch("reset"))
+					 transition(edgeName="t039",targetState="checkretry",cond=whenTimeout("local_tout_"+name+"_verifyfailed"))   
+					transition(edgeName="t040",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t041",targetState="handlereset",cond=whenDispatch("reset"))
 				}	 
 				state("checkretry") { //this:State
 					action { //it:State
@@ -329,21 +329,21 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t038",targetState="waitrequest",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "waitrequest"  
+					 transition(edgeName="t042",targetState="waitrequest",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "waitrequest"  
 					}))
-					transition(edgeName="t039",targetState="gotoindoor",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotoindoor"  
+					transition(edgeName="t043",targetState="gotoindoor",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotoindoor"  
 					}))
-					transition(edgeName="t040",targetState="takeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "takeload"  
+					transition(edgeName="t044",targetState="takeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "takeload"  
 					}))
-					transition(edgeName="t041",targetState="gotocoldroom",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotocoldroom"  
+					transition(edgeName="t045",targetState="gotocoldroom",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gotocoldroom"  
 					}))
-					transition(edgeName="t042",targetState="storeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "storeload"  
+					transition(edgeName="t046",targetState="storeload",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "storeload"  
 					}))
-					transition(edgeName="t043",targetState="gohome",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gohome"  
+					transition(edgeName="t047",targetState="gohome",cond=whenDispatchGuarded("resumetrolley",{ OldStatus == "gohome"  
 					}))
-					transition(edgeName="t044",targetState="waitrequest",cond=whenDispatch("resumetrolley"))
-					transition(edgeName="t045",targetState="handlereset",cond=whenDispatch("reset"))
-					transition(edgeName="t046",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t048",targetState="waitrequest",cond=whenDispatch("resumetrolley"))
+					transition(edgeName="t049",targetState="handlereset",cond=whenDispatch("reset"))
+					transition(edgeName="t050",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("failed") { //this:State
 					action { //it:State
@@ -370,15 +370,15 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t047",targetState="gohome",cond=whenDispatch("giveup"))
-					transition(edgeName="t048",targetState="gotoindoor",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotoindoor"  
+					 transition(edgeName="t051",targetState="gohome",cond=whenDispatch("giveup"))
+					transition(edgeName="t052",targetState="gotoindoor",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotoindoor"  
 					}))
-					transition(edgeName="t049",targetState="gotocoldroom",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotocoldroom"  
+					transition(edgeName="t053",targetState="gotocoldroom",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gotocoldroom"  
 					}))
-					transition(edgeName="t050",targetState="gohome",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gohome"  
+					transition(edgeName="t054",targetState="gohome",cond=whenDispatchGuarded("tryagain",{ CurrentStatus == "gohome"  
 					}))
-					transition(edgeName="t051",targetState="waitrequest",cond=whenDispatch("tryagain"))
-					transition(edgeName="t052",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t055",targetState="waitrequest",cond=whenDispatch("tryagain"))
+					transition(edgeName="t056",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("handlereset") { //this:State
 					action { //it:State
@@ -408,10 +408,10 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 				 	 		stateTimer = TimerActor("timer_handlereset", 
 				 	 					  scope, context!!, "local_tout_"+name+"_handlereset", 20000.toLong() )  //OCT2023
 					}	 	 
-					 transition(edgeName="t053",targetState="resetdone",cond=whenTimeout("local_tout_"+name+"_handlereset"))   
-					transition(edgeName="t054",targetState="resetdone",cond=whenReply("moverobotdone"))
-					transition(edgeName="t055",targetState="resetretry",cond=whenReply("moverobotfailed"))
-					transition(edgeName="t056",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
+					 transition(edgeName="t057",targetState="resetdone",cond=whenTimeout("local_tout_"+name+"_handlereset"))   
+					transition(edgeName="t058",targetState="resetdone",cond=whenReply("moverobotdone"))
+					transition(edgeName="t059",targetState="resetretry",cond=whenReply("moverobotfailed"))
+					transition(edgeName="t060",targetState="stoptrolley",cond=whenDispatch("stoptrolley"))
 				}	 
 				state("resetdone") { //this:State
 					action { //it:State
@@ -472,7 +472,6 @@ class Trolley ( name: String, scope: CoroutineScope, isconfined: Boolean=false  
 						forward("disengage", "disengage(trolley)" ,"basicrobot" ) 
 						CommUtils.outmagenta("$name  disengaged")
 						delay(1000) 
-						 System.exit(0)  
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002

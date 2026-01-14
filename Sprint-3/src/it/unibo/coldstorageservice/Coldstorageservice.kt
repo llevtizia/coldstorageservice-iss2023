@@ -25,7 +25,7 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 				val list = mutableListOf<Triple<Int, Float, Long>>() 
 				
 				var MAXW = 200	
-				var TICKETTIME = 30
+				var TICKETTIME = 15
 				var CurrentLoad = 0f
 				var TicketNumber = 1
 				
@@ -40,8 +40,6 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 						CommUtils.outcyan("$name in ${currentState.stateName} | $currentMsg | ${Thread.currentThread().getName()} n=${Thread.activeCount()}")
 						 	   
 						CommUtils.outgreen("$name START ")
-						updateResourceRep( "currentlystored($CurrentLoad)"  
-						)
 						//genTimer( actor, state )
 					}
 					//After Lenzi Aug2002
@@ -60,11 +58,11 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 					//After Lenzi Aug2002
 					sysaction { //it:State
 					}	 	 
-					 transition(edgeName="t00",targetState="handlestop",cond=whenDispatch("stoptrolley"))
-					transition(edgeName="t01",targetState="handleresume",cond=whenDispatch("resumetrolley"))
-					transition(edgeName="t02",targetState="handlestore",cond=whenRequest("storerequest"))
-					transition(edgeName="t03",targetState="handleticket",cond=whenRequest("ticketrequest"))
-					transition(edgeName="t04",targetState="handletrolley",cond=whenDispatch("statustrolley"))
+					 transition(edgeName="t04",targetState="handlestop",cond=whenDispatch("stoptrolley"))
+					transition(edgeName="t05",targetState="handleresume",cond=whenDispatch("resumetrolley"))
+					transition(edgeName="t06",targetState="handlestore",cond=whenRequest("storerequest"))
+					transition(edgeName="t07",targetState="handleticket",cond=whenRequest("ticketrequest"))
+					transition(edgeName="t08",targetState="handletrolley",cond=whenDispatch("statustrolley"))
 				}	 
 				state("handlestore") { //this:State
 					action { //it:State
@@ -86,9 +84,6 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								CommUtils.outblack("Current load in the cold room: $CurrentLoad ")
 								answer("storerequest", "storeaccepted", "storeaccepted($TicketNumber,$LoadToStore)"   )  
 								 TicketNumber = TicketNumber + 1  
-								updateResourceRep( "currentlystored($CurrentLoad)"  
-								)
-								CommUtils.outcyan("$name | Updated current weight: $CurrentLoad kg")
 								}
 								else
 								 {CommUtils.outgreen("$name refusing load of $LoadToStore kg")
@@ -131,9 +126,6 @@ class Coldstorageservice ( name: String, scope: CoroutineScope, isconfined: Bool
 								 					CurrentLoad = CurrentLoad - Load
 								 					list.remove(request)
 								         			println(list) 
-								 updateResourceRep( "currentlystored($CurrentLoad)"  
-								 )
-								 CommUtils.outcyan("$name | Updated current weight: $CurrentLoad kg")
 								 }
 						}
 						//genTimer( actor, state )
